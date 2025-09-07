@@ -109,7 +109,7 @@ with st.sidebar:
 
 
 # =============================================================================
-# MÓDULO 1: DATAÇÃO RADIOMÉTRICA (COMPLETO E CORRIGIDO)
+# MÓDULO 1: DATAÇÃO RADIOMÉTRICA (REVISADO E CORRIGIDO)
 # =============================================================================
 
 def modulo_datacao_radiometrica():
@@ -172,7 +172,7 @@ def modulo_carbono14():
         with st.spinner("Calculando..."):
             time.sleep(0.5)
             
-            # Cálculo CORRETO da idade usando a lei do decaimento radioativo
+            # Cálculo da idade usando a lei do decaimento radioativo
             lambda_val = math.log(2) / meia_vida
             idade = (1 / lambda_val) * math.log(1 / frac_remanescente)
             
@@ -229,7 +229,7 @@ def modulo_carbono14():
             df = pd.DataFrame({
                 "Tempo (anos)": tempos, 
                 "Fração_C14": fracoes,
-                "Atividade_Relativa": fracoes  # Para C-14, fração = atividade relativa
+                "Atividade_Relativa": fracoes
             })
             
             # Opções de download
@@ -285,7 +285,7 @@ def modulo_potassio_argonio():
             st.error("Todos os valores devem ser positivos!")
             return
             
-        # Cálculo CORRETO considerando a fração de decaimento
+        # Cálculo considerando a fração de decaimento
         lambda_val = math.log(2) / meia_vida
         idade = (1 / lambda_val) * math.log(1 + (razao_ar_k / fracao_decaimento))
         
@@ -458,7 +458,7 @@ def modulo_uranio_chumbo():
                        f"1/{lambda_u238:.3e}", f"1/{lambda_u235:.3e}"]
         }
         
-        df_detalhes = pd.DataFrame(datalhes_detalhados)
+        df_detalhes = pd.DataFrame(dados_detalhados)
         st.dataframe(df_detalhes, use_container_width=True)
         
         # Download dos resultados
