@@ -1,7 +1,6 @@
 import streamlit as st
 import math
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="RadSimLab", layout="centered")
@@ -42,7 +41,7 @@ def carregar_modulo(nome):
     elif nome == "exportar": modulo_exportar()
     elif nome == "comparar": modulo_comparar()
 
-# ⏳ Datação Radiométrica com submenu
+# ⏳ Datação Radiométrica com gráfico
 def modulo_datacao_radiometrica():
     st.subheader("⏳ Datação Radiométrica")
     metodo = st.radio("Escolha o método:", ["Carbono-14", "Potássio-Argônio", "Urânio-Chumbo"])
@@ -59,6 +58,18 @@ def modulo_carbono14():
         st.success(f"🧪 Idade estimada: {idade:.2f} anos")
         st.markdown("📐 Equação: `t = -ln(f) / λ`")
 
+        # Gráfico de decaimento
+        tempos = np.linspace(0, idade * 1.2, 100)
+        fracoes = np.exp(-l * tempos)
+        fig, ax = plt.subplots()
+        ax.plot(tempos, fracoes, label="f(t) = e^(–λt)")
+        ax.axvline(idade, color='red', linestyle='--', label=f"Idade estimada: {idade:.0f} anos")
+        ax.set_xlabel("Tempo (anos)")
+        ax.set_ylabel("Fração de C-14")
+        ax.set_title("Decaimento do Carbono-14")
+        ax.legend()
+        st.pyplot(fig)
+
 def modulo_potassio_argonio():
     st.markdown("### ⛏️ Potássio-Argônio")
     R = st.number_input("Razão Ar/K medida", min_value=0.01, value=0.5)
@@ -67,6 +78,18 @@ def modulo_potassio_argonio():
         idade = (1 / l) * math.log(1 + R)
         st.success(f"⛏️ Idade estimada: {idade:.2f} anos")
         st.markdown("📐 Equação: `t = (1 / λ) · ln(1 + R)`")
+
+        # Gráfico de crescimento de Ar
+        tempos = np.linspace(0, idade * 1.2, 100)
+        razoes = np.exp(l * tempos) - 1
+        fig, ax = plt.subplots()
+        ax.plot(tempos, razoes, label="R(t) = e^(λt) – 1")
+        ax.axvline(idade, color='red', linestyle='--', label=f"Idade estimada: {idade:.0f} anos")
+        ax.set_xlabel("Tempo (anos)")
+        ax.set_ylabel("Razão Ar/K")
+        ax.set_title("Acúmulo de Argônio")
+        ax.legend()
+        st.pyplot(fig)
 
 def modulo_uranio_chumbo():
     st.markdown("### ⛏️ Urânio-Chumbo")
@@ -77,6 +100,17 @@ def modulo_uranio_chumbo():
         st.success(f"⛏️ Idade estimada: {idade:.2f} anos")
         st.markdown("📐 Equação: `t = (1 / λ) · ln(R + 1)`")
 
+        # Gráfico de crescimento de Pb
+        tempos = np.linspace(0, idade * 1.2, 100)
+        razoes = np.exp(l * tempos) - 1
+        fig, ax = plt.subplots()
+        ax.plot(tempos, razoes, label="R(t) = e^(λt) – 1")
+        ax.axvline(idade, color='red', linestyle='--', label=f"Idade estimada: {idade:.0f} anos")
+        ax.set_xlabel("Tempo (anos)")
+        ax.set_ylabel("Razão Pb/U")
+        ax.set_title("Acúmulo de Chumbo")
+        ax.legend()
+        st.pyplot(fig)
 def modulo_blindagem():
     st.subheader("🧱 Cálculo de Blindagem Radiológica")
     I0 = st.number_input("Dose inicial (µSv/h)", min_value=0.01, value=100.0)
@@ -110,8 +144,8 @@ def modulo_dose():
             st.write(f"x = {x} cm → Dose = {d:.2f} Gy")
         st.markdown("📐 Equação: `D(x) = D₀ · e^(–μx)`")
         fig, ax = plt.subplots()
-        ax.plot(profundidades, doses, marker='o')
-        ax.set_title("Distribuição de Dose")
+        ax.plot(profundidades, doses, marker='o', color='purple')
+        ax.set_title("Distribuição de Dose em Tecido")
         ax.set_xlabel("Profundidade (cm)")
         ax.set_ylabel("Dose (Gy)")
         st.pyplot(fig)
@@ -128,13 +162,23 @@ def modulo_clinico():
         st.success(f"🧬 Atividade no órgão: {A:.2f} MBq")
         st.markdown("📐 Equação: `A = D · F · e^(–λt)`")
 
+        # Gráfico de decaimento da atividade
+        tempos = np.linspace(0, H * 2, 100)
+        atividades = D * (F / 100) * np.exp(-lambda_ * tempos)
+        fig, ax = plt.subplots()
+        ax.plot(tempos, atividades, label="A(t) = D · F · e^(–λt)", color='green')
+        ax.axvline(T, color='red', linestyle='--', label=f"Tempo atual: {T:.1f} h")
+        ax.set_xlabel("Tempo (h)")
+        ax.set_ylabel("Atividade (MBq)")
+        ax.set_title("Decaimento de Tc-99m no órgão")
+        ax.legend()
+        st.pyplot(fig)
 def modulo_ambiental():
     st.subheader("🌱 Exposição Ambiental à Radiação")
     taxa_solo = st.number_input("Taxa no solo (µSv/h)", min_value=0.0, value=1.0)
     tempo_solo = st.number_input("Tempo no solo (h)", min_value=0.0, value=5.0)
     taxa_ar = st.number_input("Taxa no ar (µSv/h)", min_value=0.0, value=0.5)
     tempo_ar = st.number_input("Tempo no ar (h)", min_value=0.0, value=3.0)
-
     if st.button("Calcular Exposição Ambiental"):
         dose_solo = taxa_solo * tempo_solo
         dose_ar = taxa_ar * tempo_ar
@@ -142,6 +186,7 @@ def modulo_ambiental():
         st.success(f"🌱 Dose no solo: {dose_solo:.2f} µSv")
         st.info(f"🌬️ Dose no ar: {dose_ar:.2f} µSv")
         st.write(f"📊 Dose total: {total:.2f} µSv")
+
 def modulo_compton():
     st.subheader("🔄 Espalhamento Compton")
     E = st.number_input("Energia do fóton (MeV)", min_value=0.01, value=1.0)
@@ -211,7 +256,8 @@ def modulo_exportar():
     if texto:
         linhas = texto.strip().split("\n")
         preview = "\n".join(linhas[:5])
-        st.write(f"📄 Preview:\n{preview}")
+        st.write("📄 Preview:")
+        st.text(preview)
         st.download_button("📥 Baixar TXT", data=texto, file_name="dados.txt", mime="text/plain")
 
 def modulo_comparar():
@@ -227,8 +273,13 @@ def modulo_comparar():
             st.success(f"📈 Média A: {mA:.2f}")
             st.info(f"📉 Média B: {mB:.2f}")
             st.write(f"🔍 Diferença: {(mA - mB):.2f}")
+            fig, ax = plt.subplots()
+            ax.bar(["Simulação A", "Simulação B"], [mA, mB], color=["blue", "green"])
+            ax.set_ylabel("Média dos valores")
+            ax.set_title("Comparação entre Simulações")
+            st.pyplot(fig)
         except:
             st.error("❌ Dados inválidos. Use números separados por vírgula.")
 
-# Executa o módulo selecionado
+# 🚀 Executa o módulo selecionado
 carregar_modulo(modulos[modulo])
