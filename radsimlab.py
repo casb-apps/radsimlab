@@ -111,6 +111,7 @@ with st.sidebar:
 # MÓDULO 1: DATAÇÃO RADIOMÉTRICA
 # =============================================================================
 
+
 def modulo_datacao_radiometrica():
     st.header("⏳ Datação Radiométrica")
     
@@ -120,16 +121,18 @@ def modulo_datacao_radiometrica():
     - Para outros métodos: Insira a razão do produto de decaimento em relação ao elemento pai
     """)
     
-    metodo = st.radio("Selecione o método:", ["Carbono-14", "Potássio-Argônio", "Urânio-Chumbo", "Rubídio-Estrôncio"], horizontal=True)
+    metodo = st.radio("Selecione o método:", 
+                     ["Carbono-14", "Potássio-Argônio", "Urânio-Chumbo", "Rubídio-Estrôncio"], 
+                     horizontal=True)
     
     if metodo == "Carbono-14":
         modulo_carbono14()
     elif metodo == "Potássio-Argônio":
         modulo_potassio_argonio()
     elif metodo == "Urânio-Chumbo":
-        modulo_uranio_chumbo()
+        modulo_uranio_chumbo()  # Agora implementado
     elif metodo == "Rubídio-Estrôncio":
-        modulo_rubidio_estroncio()
+        modulo_rubidio_estroncio()  # Agora implementado
 
 def modulo_carbono14():
     st.markdown("### 🧪 Datação por Carbono-14")
@@ -338,15 +341,297 @@ def modulo_potassio_argonio():
                           file_name="potassio_argonio_simulation.csv", mime="text/csv",
                           use_container_width=True)
 
+
+
 def modulo_uranio_chumbo():
     st.markdown("### ⚛️ Datação por Urânio-Chumbo")
-    st.info("Módulo em desenvolvimento. Use Potássio-Argônio ou Carbono-14 para datação.")
-    st.warning("Este método utiliza as séries de decaimento do U-238 para Pb-206 e U-235 para Pb-207")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**📊 Parâmetros de Entrada:**")
+        razao_pb206_u238 = st.number_input("Razão ²⁰⁶Pb/²³⁸U", 
+                                         min_value=0.001, value=1.0, step=0.001,
+                                         format="%.3f",
+                                         help="Razão entre Chumbo-206 e Urânio-238")
+        
+        razao_pb207_u235 = st.number_input("Razão ²⁰⁷Pb/²³⁵U", 
+                                         min_value=0.001, value=1.0, step=0.001,
+                                         format="%.3f",
+                                         help="Razão entre Chumbo-207 e Urânio-235")
+        
+        meia_vida_u238 = st.number_input("Meia-vida do ²³⁸U (anos)", 
+                                       min_value=1.0e9, value=4.468e9, 
+                                       format="%.3e",
+                                       help="Meia-vida padrão: 4.468 × 10⁹ anos")
+        
+        meia_vida_u235 = st.number_input("Meia-vida do ²³⁵U (anos)", 
+                                       min_value=1.0e8, value=7.038e8, 
+                                       format="%.3e",
+                                       help="Meia-vida padrão: 7.038 × 10⁸ anos")
+    
+    with col2:
+        st.markdown("**📋 Informações Técnicas:**")
+        st.markdown("""
+        <table class="parameter-table">
+            <tr><th>Parâmetro</th><th>Valor</th></tr>
+            <tr><td>Meia-vida do ²³⁸U</td><td>4.468 × 10⁹ anos</td></tr>
+            <tr><td>Meia-vida do ²³⁵U</td><td>7.038 × 10⁸ anos</td></tr>
+            <tr><td>Razão ²³⁵U/²³⁸U natural</td><td>1/137.88</td></tr>
+            <tr><td>Faixa de datação</td><td>1 milhão - 4.5 bilhões de anos</td></tr>
+        </table>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("**📐 Fórmulas:**")
+        st.markdown('<div class="formula-box">t = (1/λ₂₃₈) × ln(1 + ²⁰⁶Pb/²³⁸U)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="formula-box">t = (1/λ₂₃₅) × ln(1 + ²⁰⁷Pb/²³⁵U)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="formula-box">Concórdia: verificação de consistência</div>', unsafe_allow_html=True)
+    
+    if st.button("⚛️ Calcular Datação por U-Pb", use_container_width=True):
+        if razao_pb206_u238 <= 0 or razao_pb207_u235 <= 0:
+            st.error("As razões devem ser positivas!")
+            return
+            
+        # Cálculos das idades
+        lambda_u238 = math.log(2) / meia_vida_u238
+        lambda_u235 = math.log(2) / meia_vida_u235
+        
+        idade_u238 = (1 / lambda_u238) * math.log(1 + razao_pb206_u238)
+        idade_u235 = (1 / lambda_u235) * math.log(1 + razao_pb207_u235)
+        
+        # Verificação de concórdia
+        discordancia = abs(idade_u238 - idade_u235) / ((idade_u238 + idade_u235) / 2) * 100
+        
+        st.markdown("---")
+        st.markdown("### 📊 Resultados")
+        
+        col_res1, col_res2 = st.columns(2)
+        
+        with col_res1:
+            st.markdown(f'<div class="result-box"><h4>⏳ Idade ²³⁸U→²⁰⁶Pb: <span style="color:#d32f2f">{idade_u238/1e6:,.2f} milhões de anos</span></h4></div>', unsafe_allow_html=True)
+        
+        with col_res2:
+            st.markdown(f'<div class="result-box"><h4>⏳ Idade ²³⁵U→²⁰⁷Pb: <span style="color:#d32f2f">{idade_u235/1e6:,.2f} milhões de anos</span></h4></div>', unsafe_allow_html=True)
+        
+        # Análise de concórdia
+        if discordancia < 1:
+            st.success(f"✅ CONCORDÂNCIA: {discordancia:.2f}% - Idades consistentes")
+            idade_media = (idade_u238 + idade_u235) / 2
+            st.markdown(f'<div class="result-box"><h4>🎯 Idade média: <span style="color:#d32f2f">{idade_media/1e6:,.2f} milhões de anos</span></h4></div>', unsafe_allow_html=True)
+        else:
+            st.warning(f"⚠️ DISCORDÂNCIA: {discordancia:.2f}% - Sistema pode ter sido perturbado")
+            st.info("A discordância pode indicar perda de chumbo, ganho de urânio ou evento térmico posterior.")
+        
+        # Gráfico de concórdia
+        st.markdown("### 📈 Diagrama de Concórdia")
+        
+        # Gerar curva de concórdia teórica
+        tempos = np.linspace(0, 4.5e9, 100)
+        razoes_206_238 = np.exp(lambda_u238 * tempos) - 1
+        razoes_207_235 = np.exp(lambda_u235 * tempos) - 1
+        
+        fig, ax = plt.subplots(figsize=(10, 8))
+        ax.plot(razoes_206_238, razoes_207_235, 'b-', linewidth=2, label='Curva de Concórdia')
+        ax.plot(razoes_206_238[-1], razoes_207_235[-1], 'ro', markersize=8, label='Idade atual (4.5 Ga)')
+        ax.plot(razoes_206_238[0], razoes_207_235[0], 'go', markersize=8, label='Origem (0 Ga)')
+        
+        # Plotar o ponto da amostra
+        ax.plot(razao_pb206_u238, razao_pb207_u235, 'ms', markersize=10, 
+               label=f'Amostra: {idade_u238/1e6:.1f}/{idade_u235/1e6:.1f} Ma')
+        
+        ax.set_xlabel("²⁰⁶Pb/²³⁸U")
+        ax.set_ylabel("²⁰⁷Pb/²³⁵U")
+        ax.set_title("Diagrama de Concórdia U-Pb")
+        ax.legend()
+        ax.grid(True)
+        
+        st.pyplot(fig)
+        
+        # Tabela de resultados detalhados
+        st.markdown("### 📋 Detalhes dos Cálculos")
+        
+        dados_detalhados = {
+            "Parâmetro": ["λ(²³⁸U)", "λ(²³⁵U)", "ln(1+²⁰⁶Pb/²³⁸U)", "ln(1+²⁰⁷Pb/²³⁵U)", "1/λ(²³⁸U)", "1/λ(²³⁵U)"],
+            "Valor": [f"{lambda_u238:.3e} ano⁻¹", f"{lambda_u235:.3e} ano⁻¹", 
+                     f"{math.log(1+razao_pb206_u238):.4f}", f"{math.log(1+razao_pb207_u235):.4f}",
+                     f"{1/lambda_u238:.3e} anos", f"{1/lambda_u235:.3e} anos"],
+            "Cálculo": [f"ln(2)/{meia_vida_u238:.3e}", f"ln(2)/{meia_vida_u235:.3e}",
+                       f"ln(1+{razao_pb206_u238})", f"ln(1+{razao_pb207_u235})",
+                       f"1/{lambda_u238:.3e}", f"1/{lambda_u235:.3e}"]
+        }
+        
+        df_detalhes = pd.DataFrame(dados_detalhados)
+        st.dataframe(df_detalhes, use_container_width=True)
+        
+        # Download dos resultados
+        resultado = f"""DATAÇÃO URÂNIO-CHUMBO
+=====================
+DATA: {datetime.now().strftime('%d/%m/%Y %H:%M')}
+
+PARÂMETROS:
+- Razão ²⁰⁶Pb/²³⁸U: {razao_pb206_u238}
+- Razão ²⁰⁷Pb/²³⁵U: {razao_pb207_u235}
+- Meia-vida ²³⁸U: {meia_vida_u238:.3e} anos
+- Meia-vida ²³⁵U: {meia_vida_u235:.3e} anos
+
+RESULTADOS:
+- Idade ²³⁸U→²⁰⁶Pb: {idade_u238/1e6:.2f} milhões de anos
+- Idade ²³⁵U→²⁰⁷Pb: {idade_u235/1e6:.2f} milhões de anos
+- Discordância: {discordancia:.2f}%
+
+CONSTANTES:
+- λ(²³⁸U) = {lambda_u238:.3e} ano⁻¹
+- λ(²³⁵U) = {lambda_u235:.3e} ano⁻¹
+
+INTERPRETAÇÃO:
+{'Idades concordantes - sistema fechado' if discordancia < 1 else 'Idades discordantes - sistema perturbado'}
+"""
+
+        st.download_button("📥 Baixar Relatório U-Pb", data=resultado,
+                          file_name="datacao_uranio_chumbo.txt",
+                          mime="text/plain", use_container_width=True)
+
 
 def modulo_rubidio_estroncio():
     st.markdown("### 🔬 Datação por Rubídio-Estrôncio")
-    st.info("Módulo em desenvolvimento. Use Potássio-Argônio ou Carbono-14 para datação.")
-    st.warning("Este método utiliza o decaimento do Rb-87 para Sr-87 com meia-vida de 48.8 bilhões de anos")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**📊 Parâmetros de Entrada:**")
+        razao_sr87_rb87 = st.number_input("Razão ⁸⁷Sr/⁸⁷Rb", 
+                                        min_value=0.001, value=0.5, step=0.001,
+                                        format="%.3f",
+                                        help="Razão entre Estrôncio-87 e Rubídio-87")
+        
+        meia_vida_rb87 = st.number_input("Meia-vida do ⁸⁷Rb (anos)", 
+                                       min_value=1.0e9, value=4.88e10, 
+                                       format="%.3e",
+                                       help="Meia-vida padrão: 4.88 × 10¹⁰ anos")
+        
+        razao_inicial_sr87_sr86 = st.number_input("Razão inicial ⁸⁷Sr/⁸⁶Sr", 
+                                                min_value=0.0, value=0.710, step=0.001,
+                                                format="%.3f",
+                                                help="Valor primordial: ~0.698-0.710")
+    
+    with col2:
+        st.markdown("**📋 Informações Técnicas:**")
+        st.markdown("""
+        <table class="parameter-table">
+            <tr><th>Parâmetro</th><th>Valor</th></tr>
+            <tr><td>Meia-vida do ⁸⁷Rb</td><td>4.88 × 10¹⁰ anos</td></tr>
+            <tr><td>Constante de decaimento</td><td>1.42 × 10⁻¹¹ ano⁻¹</td></tr>
+            <tr><td>Razão inicial ⁸⁷Sr/⁸⁶Sr</td><td>0.698 - 0.710</td></tr>
+            <tr><td>Faixa de datação</td><td>10 milhões - 4.5 bilhões de anos</td></tr>
+        </table>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("**📐 Fórmula da Isochrona:**")
+        st.markdown('<div class="formula-box">(⁸⁷Sr/⁸⁶Sr) = (⁸⁷Sr/⁸⁶Sr)₀ + (⁸⁷Rb/⁸⁶Sr) × (e^(λt) - 1)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="formula-box">t = (1/λ) × ln(1 + (⁸⁷Sr/⁸⁷Rb))</div>', unsafe_allow_html=True)
+    
+    if st.button("🔬 Calcular Datação por Rb-Sr", use_container_width=True):
+        if razao_sr87_rb87 <= 0 or meia_vida_rb87 <= 0:
+            st.error("Valores devem ser positivos!")
+            return
+            
+        # Cálculos
+        lambda_rb87 = math.log(2) / meia_vida_rb87
+        idade = (1 / lambda_rb87) * math.log(1 + razao_sr87_rb87)
+        
+        st.markdown("---")
+        st.markdown("### 📊 Resultados")
+        
+        idade_bilhoes = idade / 1e9
+        
+        st.markdown(f'<div class="result-box"><h4>⏳ Idade estimada: <span style="color:#d32f2f">{idade_bilhoes:.3f} bilhões de anos</span></h4></div>', unsafe_allow_html=True)
+        
+        # Interpretação
+        if idade_bilhoes > 4.5:
+            st.warning("⚠️ Idade superior à idade da Terra (4.54 bilhões de anos). Verifique os parâmetros.")
+        elif idade_bilhoes > 3.8:
+            st.success("✅ Idade consistente com rochas arqueanas.")
+        elif idade_bilhoes > 2.5:
+            st.info("ℹ️ Idade consistente com rochas proterozoicas.")
+        else:
+            st.info("ℹ️ Idade consistente com rochas fanerozoicas.")
+        
+        # Gráfico da isochrona
+        st.markdown("### 📈 Diagrama Isochrona Rb-Sr")
+        
+        # Simular vários pontos para a isochrona
+        razoes_rb_sr = np.linspace(0.1, 2.0, 10)
+        razoes_sr_sr = razao_inicial_sr87_sr86 + razoes_rb_sr * (math.exp(lambda_rb87 * idade) - 1)
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(razoes_rb_sr, razoes_sr_sr, 'r-', linewidth=2, label='Isochrona')
+        ax.plot(razoes_rb_sr[-1], razoes_sr_sr[-1], 'bo', markersize=8, 
+               label=f'Idade: {idade_bilhoes:.2f} Ga')
+        
+        # Linha de razão inicial
+        ax.axhline(y=razao_inicial_sr87_sr86, color='g', linestyle='--', 
+                  label=f'Razão inicial: {razao_inicial_sr87_sr86}')
+        
+        ax.set_xlabel("⁸⁷Rb/⁸⁶Sr")
+        ax.set_ylabel("⁸⁷Sr/⁸⁶Sr")
+        ax.set_title("Diagrama Isochrona Rb-Sr")
+        ax.legend()
+        ax.grid(True)
+        
+        st.pyplot(fig)
+        
+        # Detalhes do cálculo
+        st.markdown("### 📋 Detalhes do Cálculo")
+        
+        col_det1, col_det2 = st.columns(2)
+        
+        with col_det1:
+            st.markdown(f"- **Razão ⁸⁷Sr/⁸⁷Rb:** {razao_sr87_rb87:.4f}")
+            st.markdown(f"- **Meia-vida do ⁸⁷Rb:** {meia_vida_rb87:.3e} anos")
+            st.markdown(f"- **Razão inicial ⁸⁷Sr/⁸⁶Sr:** {razao_inicial_sr87_sr86:.3f}")
+        
+        with col_det2:
+            st.markdown(f"- **Constante λ:** {lambda_rb87:.3e} ano⁻¹")
+            st.markdown(f"- **ln(1 + razão):** {math.log(1 + razao_sr87_rb87):.4f}")
+            st.markdown(f"- **1/λ:** {1/lambda_rb87:.3e} anos")
+        
+        # Aplicações e limitações
+        st.markdown("### 💡 Aplicações e Limitações")
+        
+        st.markdown("""
+        **Aplicações:**
+        - Datação de rochas ígneas e metamórficas
+        - Estudos de evolução crustal
+        - Determinação de idades de formação de minerais
+        
+        **Limitações:**
+        - Sistema sensível a alterações térmicas
+        - Requer múltiplas amostras para método isochrona
+        - Pode ser resetado por eventos metamórficos
+        """)
+        
+        # Download dos resultados
+        resultado = f"""DATAÇÃO RUBÍDIO-ESTRÔNCIO
+========================
+DATA: {datetime.now().strftime('%d/%m/%Y %H:%M')}
+
+PARÂMETROS:
+- Razão ⁸⁷Sr/⁸⁷Rb: {razao_sr87_rb87}
+- Meia-vida ⁸⁷Rb: {meia_vida_rb87:.3e} anos
+- Razão inicial ⁸⁷Sr/⁸⁶Sr: {razao_inicial_sr87_sr86}
+
+RESULTADOS:
+- Idade estimada: {idade_bilhoes:.3f} bilhões de anos
+- Constante λ: {lambda_rb87:.3e} ano⁻¹
+
+INTERPRETAÇÃO:
+{'Idade superior à idade da Terra - verifique parâmetros' if idade_bilhoes > 4.5 else 'Idade consistente com escala geológica'}
+"""
+
+        st.download_button("📥 Baixar Relatório Rb-Sr", data=resultado,
+                          file_name="datacao_rubidio_estroncio.txt",
+                          mime="text/plain", use_container_width=True)
+
 
 # =============================================================================
 # MÓDULO 2: BLINDAGEM RADIOLÓGICA
@@ -1448,8 +1733,9 @@ RECOMENDAÇÕES:
                           file_name="exposicao_ocupacional.txt", 
                           mime="text/plain", use_container_width=True)
 
+
 # =============================================================================
-# MÓDULO 10: CENÁRIOS HISTÓRICOS
+# MÓDULO 10: CENÁRIOS HISTÓRICOS (COMPLETO)
 # =============================================================================
 
 def modulo_cenarios_historicos():
@@ -1458,141 +1744,1123 @@ def modulo_cenarios_historicos():
     st.info("""
     **Instruções:**
     - Selecione um evento histórico significativo
-    - Configure os parâmetros de simulação
-    - Visualize os impactos radiológicos
+    - Configure os parâmetros de simulação  
+    - Visualize os impactos radiológicos e lições aprendidas
     """)
     
     eventos = {
         "Chernobyl (1986)": "Acidente nuclear de Chernobyl",
-        "Fukushima (2011)": "Acidente nuclear de Fukushima",
+        "Fukushima (2011)": "Acidente nuclear de Fukushima", 
         "Goiânia (1987)": "Acidente com césio-137 em Goiânia",
         "Three Mile Island (1979)": "Acidente nuclear nos EUA",
-        "Testes Nucleares": "Testes atmosféricos de armas nucleares"
+        "Testes Nucleares": "Testes atmosféricos de armas nucleares",
+        "Kyshtym (1957)": "Acidente nuclear de Kyshtym (URSS)",
+        "Windscale (1957)": "Incêndio de Windscale (Reino Unido)",
+        "Tokaimura (1999)": "Acidente de criticidade de Tokaimura (Japão)"
     }
     
     evento = st.selectbox("Selecione o evento histórico:", list(eventos.keys()))
     
     if evento == "Chernobyl (1986)":
-        st.markdown("### ☢️ Acidente de Chernobyl (1986)")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("**📊 Parâmetros do Acidente:**")
-            liberacao = st.slider("Liberação estimada (PBq)", 
-                                1000, 10000, 5200, 100,
-                                help="Atividade total liberada (1 PBq = 10¹⁵ Bq)")
-            
-            distancia = st.slider("Distância do reator (km)", 
-                                1, 1000, 30, 1)
-            
-            tempo_exposicao = st.slider("Tempo de exposição (horas)", 
-                                      1, 720, 24, 1)
-        
-        with col2:
-            st.markdown("**📋 Isótopos Principais:**")
-            st.markdown("- **I-131:** 8.02 dias meia-vida (tiroide)")
-            st.markdown("- **Cs-137:** 30.17 anos meia-vida (corpo inteiro)")
-            st.markdown("- **Sr-90:** 28.8 anos meia-vida (ossos)")
-            st.markdown("- **Pu-239:** 24,100 anos meia-vida (pulmões)")
-            
-            st.markdown("**🛡️ Fatores de Proteção:**")
-            abrigo = st.slider("Fator de proteção do abrigo", 1.0, 100.0, 10.0, 1.0)
-            evacuação = st.selectbox("Tempo de evacuação", 
-                                   ["Imediata", "1 dia", "3 dias", "1 semana", "Nenhuma"],
-                                   index=0)
-        
-        if st.button("📊 Simular Impacto de Chernobyl"):
-            # Cálculos simplificados
-            # Dose aproximada usando modelo de nuvem radioativa
-            dose_1h = (liberacao * 1000) / (distancia ** 2)  # µSv/h a 1 km
-            dose_total = dose_1h * tempo_exposicao / abrigo
-            
-            # Redução por evacuação
-            fatores_evac = {
-                "Imediata": 0.1, "1 dia": 0.3, "3 dias": 0.6, 
-                "1 semana": 0.8, "Nenhuma": 1.0
-            }
-            dose_total *= fatores_evac[evacuação]
-            
-            st.markdown("---")
-            st.markdown("### 📊 Resultados da Simulação")
-            
-            col_res1, col_res2 = st.columns(2)
-            
-            with col_res1:
-                st.markdown(f'<div class="result-box"><h4>📈 Dose estimada: <span style="color:#d32f2f">{dose_total:,.0f} µSv</span></h4></div>', unsafe_allow_html=True)
-                st.markdown(f'<div class="info-box"><h4>📏 Equivalente: <span style="color:#1976D2">{dose_total/1000:.1f} mSv</span></h4></div>', unsafe_allow_html=True)
-            
-            with col_res2:
-                # Comparação com limites
-                if dose_total < 1000:
-                    risco = "Muito baixo"
-                    cor = "green"
-                elif dose_total < 10000:
-                    risco = "Baixo"
-                    cor = "orange"
-                elif dose_total < 50000:
-                    risco = "Moderado" 
-                    cor = "red"
-                else:
-                    risco = "Alto"
-                    cor = "darkred"
-                
-                st.markdown(f'<div class="warning-box"><h4>⚠️ Nível de risco: <span style="color:{cor}">{risco}</span></h4></div>', unsafe_allow_html=True)
-            
-            # Efeitos na saúde
-            st.markdown("### 👨‍⚕️ Possíveis Efeitos na Saúde")
-            
-            if dose_total < 100000:  # < 100 mSv
-                st.success("✅ **Baixo risco** - Sem efeitos agudos. Risco de câncer ligeiramente aumentado.")
-                st.markdown("- Nenhum efeito imediato na saúde")
-                st.markdown("- Risco estatístico de câncer muito baixo")
-                st.markdown("- Monitoramento médico recomendado")
-                
-            elif dose_total < 1000000:  # < 1 Sv
-                st.warning("⚠️ **Risco moderado** - Possíveis efeitos tardios.")
-                st.markdown("- Náusea leve em indivíduos sensíveis")
-                st.markdown("- Risco aumentado de câncer a longo prazo")
-                st.markdown("- Acompanhamento médico necessário")
-                
-            else:  # > 1 Sv
-                st.error("🚨 **Alto risco** - Efeitos agudos prováveis.")
-                st.markdown("- Síndrome aguda de radiação")
-                st.markdown("- Danos aos órgãos hematopoiéticos")
-                st.markdown("- Tratamento médico imediato necessário")
-            
-            # Mapa de contaminação simulado
-            distancias = np.linspace(1, 300, 100)
-            doses_map = (liberacao * 1000) / (distancias ** 2) * 24 / abrigo
-            
-            fig, ax = plt.subplots(figsize=(10, 6))
-            ax.plot(distancias, doses_map/1000, 'r-', linewidth=2)  # Convertendo para mSv
-            ax.axvline(x=30, color='blue', linestyle='--', label='Zona de exclusão (30 km)')
-            ax.axhline(y=20, color='green', linestyle='--', label='Limite ocupacional anual (20 mSv)')
-            ax.axhline(y=1, color='orange', linestyle='--', label='Limite público anual (1 mSv)')
-            
-            ax.set_xlabel("Distância do Reator (km)")
-            ax.set_ylabel("Dose em 24h (mSv)")
-            ax.set_title("Perfil de Dose - Acidente de Chernobyl")
-            ax.legend()
-            ax.grid(True)
-            ax.set_yscale('log')
-            
-            st.pyplot(fig)
-            
-            # Informações históricas
-            st.markdown("### 📜 Informações Históricas")
-            st.markdown("""
-            **O acidente de Chernobyl (26/04/1986):**
-            - Liberação estimada: 5,200 PBq de material radioativo
-            - Área evacuada: 30 km ao redor do reator
-            - Trabalhadores de emergência receberam doses de 0.2-16 Sv
-            - População próxima: doses de 10-500 mSv
-            """)
+        simulacao_chernobyl()
+    elif evento == "Fukushima (2011)":
+        simulacao_fukushima()
+    elif evento == "Goiânia (1987)":
+        simulacao_goiania()
+    elif evento == "Three Mile Island (1979)":
+        simulacao_three_mile_island()
+    elif evento == "Testes Nucleares":
+        simulacao_testes_nucleares()
+    elif evento == "Kyshtym (1957)":
+        simulacao_kyshtym()
+    elif evento == "Windscale (1957)":
+        simulacao_windscale()
+    elif evento == "Tokaimura (1999)":
+        simulacao_tokaimura()
+
+def simulacao_chernobyl():
+    st.markdown("### ☢️ Acidente de Chernobyl (1986)")
     
-    else:
-        st.info(f"Simulação do evento {evento} em desenvolvimento.")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**📊 Parâmetros do Acidente:**")
+        liberacao = st.slider("Liberação estimada (PBq)", 
+                            1000, 10000, 5200, 100,
+                            help="Atividade total liberada (1 PBq = 10¹⁵ Bq)")
+        
+        distancia = st.slider("Distância do reator (km)", 
+                            1, 1000, 30, 1)
+        
+        tempo_exposicao = st.slider("Tempo de exposição (horas)", 
+                                  1, 720, 24, 1)
+    
+    with col2:
+        st.markdown("**📋 Isótopos Principais:**")
+        st.markdown("- **I-131:** 8.02 dias meia-vida (tiroide)")
+        st.markdown("- **Cs-137:** 30.17 anos meia-vida (corpo inteiro)")
+        st.markdown("- **Sr-90:** 28.8 anos meia-vida (ossos)")
+        st.markdown("- **Pu-239:** 24,100 anos meia-vida (pulmões)")
+        
+        st.markdown("**🛡️ Fatores de Proteção:**")
+        abrigo = st.slider("Fator de proteção do abrigo", 1.0, 100.0, 10.0, 1.0)
+        evacuacao = st.selectbox("Tempo de evacuação", 
+                               ["Imediata", "1 dia", "3 dias", "1 semana", "Nenhuma"],
+                               index=0)
+    
+    if st.button("📊 Simular Impacto de Chernobyl"):
+        # Cálculos simplificados
+        dose_1h = (liberacao * 1000) / (distancia ** 2)  # µSv/h a 1 km
+        dose_total = dose_1h * tempo_exposicao / abrigo
+        
+        # Redução por evacuação
+        fatores_evac = {
+            "Imediata": 0.1, "1 dia": 0.3, "3 dias": 0.6, 
+            "1 semana": 0.8, "Nenhuma": 1.0
+        }
+        dose_total *= fatores_evac[evacuacao]
+        
+        st.markdown("---")
+        st.markdown("### 📊 Resultados da Simulação")
+        
+        col_res1, col_res2 = st.columns(2)
+        
+        with col_res1:
+            st.markdown(f'<div class="result-box"><h4>📈 Dose estimada: <span style="color:#d32f2f">{dose_total:,.0f} µSv</span></h4></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="info-box"><h4>📏 Equivalente: <span style="color:#1976D2">{dose_total/1000:.1f} mSv</span></h4></div>', unsafe_allow_html=True)
+        
+        with col_res2:
+            if dose_total < 1000:
+                risco = "Muito baixo"
+                cor = "green"
+            elif dose_total < 10000:
+                risco = "Baixo"
+                cor = "orange"
+            elif dose_total < 50000:
+                risco = "Moderado" 
+                cor = "red"
+            else:
+                risco = "Alto"
+                cor = "darkred"
+            
+            st.markdown(f'<div class="warning-box"><h4>⚠️ Nível de risco: <span style="color:{cor}">{risco}</span></h4></div>', unsafe_allow_html=True)
+        
+        # Efeitos na saúde
+        st.markdown("### 👨‍⚕️ Possíveis Efeitos na Saúde")
+        
+        if dose_total < 100000:  # < 100 mSv
+            st.success("✅ **Baixo risco** - Sem efeitos agudos. Risco de câncer ligeiramente aumentado.")
+            st.markdown("- Nenhum efeito imediato na saúde")
+            st.markdown("- Risco estatístico de câncer muito baixo")
+            st.markdown("- Monitoramento médico recomendado")
+        elif dose_total < 1000000:  # < 1 Sv
+            st.warning("⚠️ **Risco moderado** - Possíveis efeitos tardios.")
+            st.markdown("- Náusea leve em indivíduos sensíveis")
+            st.markdown("- Risco aumentado de câncer a longo prazo")
+            st.markdown("- Acompanhamento médico necessário")
+        else:  # > 1 Sv
+            st.error("🚨 **Alto risco** - Efeitos agudos prováveis.")
+            st.markdown("- Síndrome aguda de radiação")
+            st.markdown("- Danos aos órgãos hematopoiéticos")
+            st.markdown("- Tratamento médico imediato necessário")
+        
+        # Mapa de contaminação simulado
+        distancias = np.linspace(1, 300, 100)
+        doses_map = (liberacao * 1000) / (distancias ** 2) * 24 / abrigo
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(distancias, doses_map/1000, 'r-', linewidth=2)  # Convertendo para mSv
+        ax.axvline(x=30, color='blue', linestyle='--', label='Zona de exclusão (30 km)')
+        ax.axhline(y=20, color='green', linestyle='--', label='Limite ocupacional anual (20 mSv)')
+        ax.axhline(y=1, color='orange', linestyle='--', label='Limite público anual (1 mSv)')
+        
+        ax.set_xlabel("Distância do Reator (km)")
+        ax.set_ylabel("Dose em 24h (mSv)")
+        ax.set_title("Perfil de Dose - Acidente de Chernobyl")
+        ax.legend()
+        ax.grid(True)
+        ax.set_yscale('log')
+        
+        st.pyplot(fig)
+        
+        # Informações históricas
+        st.markdown("### 📜 Informações Históricas")
+        st.markdown("""
+        **O acidente de Chernobyl (26/04/1986):**
+        - **Causa:** Teste de segurança mal executado no reator RBMK-1000
+        - **Liberação estimada:** 5,200 PBq de material radioativo
+        - **Área evacuada:** 30 km ao redor do reator (Zona de Exclusão)
+        - **Trabalhadores de emergência:** doses de 0.2-16 Sv
+        - **População próxima:** doses de 10-500 mSv
+        - **Impacto global:** Detectado em toda a Europa
+        
+        **Consequências:**
+        - 31 mortes diretas (bombeiros e operadores)
+        - ~4,000 casos de câncer de tireoide (principalmente em crianças)
+        - Evacuação de 116,000 pessoas inicialmente
+        - Prejuízos econômicos estimados em US$ 235 bilhões
+        """)
+        
+        # Lições aprendidas
+        st.markdown("### 💡 Lições Aprendidas com Chernobyl")
+        st.markdown("""
+        1. **Projeto de reatores** - Melhorias nos reatores RBMK e novos designs de segurança
+        2. **Cultura de segurança** - Importância da transparência e reporting de problemas
+        3. **Preparação para emergências** - Desenvolvimento de planos de evacuação e resposta
+        4. **Comunicação internacional** - Criação da Escala INES e protocolos de notificação
+        5. **Monitoramento ambiental** - Sistemas aprimorados de detecção e monitoramento
+        """)
+
+def simulacao_fukushima():
+    st.markdown("### ☢️ Acidente de Fukushima Daiichi (2011)")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**📊 Parâmetros do Acidente:**")
+        liberacao = st.slider("Liberação estimada (PBq)", 
+                            100, 1000, 500, 10,
+                            help="Atividade total liberada de I-131 e Cs-137")
+        
+        distancia = st.slider("Distância da usina (km)", 
+                            1, 100, 30, 1)
+        
+        tempo_exposicao = st.slider("Tempo de exposição (dias)", 
+                                  1, 365, 90, 1)
+    
+    with col2:
+        st.markdown("**📋 Isótopos Principais:**")
+        st.markdown("- **I-131:** 8.02 dias meia-vida (tiroide)")
+        st.markdown("- **Cs-137:** 30.17 anos meia-vida (solo, alimentos)")
+        st.markdown("- **Cs-134:** 2.06 anos meia-vida")
+        st.markdown("- **Sr-90:** 28.8 anos meia-vida (ossos)")
+        
+        st.markdown("**🛡️ Fatores de Proteção:**")
+        evacuacao = st.selectbox("Tempo de evacuação", 
+                               ["Imediata", "3 dias", "1 semana", "2 semanas", "Nenhuma"],
+                               index=0)
+        iodo = st.checkbox("Uso de iodeto de potássio", value=True)
+        vento_direcao = st.selectbox("Direção predominante do vento", 
+                                   ["Para o mar", "Para terra", "Mista"],
+                                   index=0)
+    
+    if st.button("📊 Simular Impacto de Fukushima"):
+        # Cálculos baseados em modelos reais de Fukushima
+        dose_1d = (liberacao * 800) / (distancia ** 1.5)  # µSv/dia a 1 km
+        dose_total = dose_1d * tempo_exposicao
+        
+        # Reduções por proteção
+        fatores_evac = {"Imediata": 0.2, "3 dias": 0.4, "1 semana": 0.6, "2 semanas": 0.8, "Nenhuma": 1.0}
+        dose_total *= fatores_evac[evacuacao]
+        
+        if iodo:
+            dose_total *= 0.7  # Redução de 30% com iodeto de potássio
+            
+        if vento_direcao == "Para o mar":
+            dose_total *= 0.3  # 70% da contaminação foi para o oceano
+        elif vento_direcao == "Mista":
+            dose_total *= 0.7
+        
+        st.markdown("---")
+        st.markdown("### 📊 Resultados da Simulação")
+        
+        col_res1, col_res2 = st.columns(2)
+        
+        with col_res1:
+            st.markdown(f'<div class="result-box"><h4>📈 Dose estimada: <span style="color:#d32f2f">{dose_total:,.0f} µSv</span></h4></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="info-box"><h4>📏 Equivalente: <span style="color:#1976D2">{dose_total/1000:.1f} mSv</span></h4></div>', unsafe_allow_html=True)
+        
+        with col_res2:
+            if dose_total < 10000:
+                risco = "Muito baixo"
+                cor = "green"
+            elif dose_total < 50000:
+                risco = "Baixo" 
+                cor = "orange"
+            elif dose_total < 100000:
+                risco = "Moderado"
+                cor = "red"
+            else:
+                risco = "Alto"
+                cor = "darkred"
+            
+            st.markdown(f'<div class="warning-box"><h4>⚠️ Nível de risco: <span style="color:{cor}">{risco}</span></h4></div>', unsafe_allow_html=True)
+        
+        # Comparação com dados reais
+        st.markdown("### 📊 Comparação com Dados Reais de Fukushima")
+        
+        dados_reais = {
+            "Local": ["Fukushima City", "Iitate Village", "Minamisoma", "Tokyo"],
+            "Distância (km)": [60, 40, 25, 240],
+            "Dose 1º ano (mSv)": [4.0, 20.0, 12.0, 0.1],
+            "Dose 4 anos (mSv)": [12.0, 60.0, 36.0, 0.4]
+        }
+        
+        df_reais = pd.DataFrame(dados_reais)
+        st.dataframe(df_reais.style.format({"Dose 1º ano (mSv)": "{:.1f}", "Dose 4 anos (mSv)": "{:.1f}"}))
+        
+        # Mapa de contaminação
+        distancias = np.linspace(1, 200, 100)
+        doses_map = (liberacao * 800) / (distancias ** 1.5) * 90  # 90 dias
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(distancias, doses_map/1000, 'r-', linewidth=2)  # Convertendo para mSv
+        ax.axvline(x=20, color='red', linestyle='--', label='Zona de evacuação (20 km)')
+        ax.axvline(x=30, color='orange', linestyle='--', label='Zona de preparação (30 km)')
+        ax.axhline(y=20, color='green', linestyle='--', label='Limite de evacuação (20 mSv/ano)')
+        
+        ax.set_xlabel("Distância da Usina (km)")
+        ax.set_ylabel("Dose em 90 dias (mSv)")
+        ax.set_title("Perfil de Dose - Acidente de Fukushima")
+        ax.legend()
+        ax.grid(True)
+        ax.set_yscale('log')
+        
+        st.pyplot(fig)
+        
+        # Informações históricas
+        st.markdown("### 📜 Informações Históricas")
+        st.markdown("""
+        **O acidente de Fukushima Daiichi (11/03/2011):**
+        - **Causa:** Tsunami de 15m após terremoto de 9.0 magnitude
+        - **Perda completa de energia:** Falha dos geradores diesel de emergência
+        - **Fusão do núcleo:** Em 3 dos 6 reatores
+        - **Liberação estimada:** 500-1000 PBq (principalmente I-131 e Cs-137)
+        - **Área evacuada:** 20km ao redor da usina + áreas de alta dose
+        - **População evacuada:** ~154,000 pessoas
+        
+        **Consequências:**
+        - Nenhuma morte direta por radiação
+        - 2 trabalhadores feridos por explosão de hidrogênio
+        - ~1,600 mortes indiretas relacionadas ao estresse da evacuação
+        - Contaminação significativa do solo e água
+        """)
+        
+        # Lições aprendidas
+        st.markdown("### 💡 Lições Aprendidas com Fukushima")
+        st.markdown("""
+        1. **Proteção contra desastres naturais** - Muros de tsunami mais altos e localização crítica
+        2. **Resiliência energética** - Sistemas de backup diversificados e à prova de falhas
+        3. **Gestão de crise** - Protocolos claros de evacuação e comunicação
+        4. **Preparação para acidentes severos** - Equipamentos móveis de emergência
+        5. **Cooperação internacional** - Compartilhamento de expertise e recursos
+        """)
+
+def simulacao_goiania():
+    st.markdown("### ☢️ Acidente Radiológico de Goiânia (1987)")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**📊 Parâmetros do Acidente:**")
+        atividade_fonte = st.slider("Atividade da fonte (TBq)", 
+                                  0.1, 100.0, 50.7, 0.1,
+                                  help="Atividade inicial do Cs-137 (1 TBq = 10¹² Bq)")
+        
+        tempo_exposicao = st.slider("Tempo de exposição (dias)", 
+                                  1, 30, 16, 1)
+        
+        tipo_exposicao = st.selectbox("Tipo de exposição", 
+                                    ["Contato direto", "Inalação", "Ingestão", "Ambiental"],
+                                    index=0)
+    
+    with col2:
+        st.markdown("**📋 Características da Fonte:**")
+        st.markdown("- **Material:** Cloreto de Césio-137 (Cs-137)")
+        st.markdown("- **Atividade inicial:** 50.7 TBq (1,373 Ci)")
+        st.markdown("- **Forma:** Pó azul brilhante (luminoso)")
+        st.markdown("- **Meia-vida:** 30.17 anos")
+        
+        st.markdown("**🛡️ Fatores de Proteção:**")
+        conhecimento = st.selectbox("Conhecimento do risco", 
+                                  ["Nenhum", "Baixo", "Médio", "Alto"],
+                                  index=0)
+        lavagem = st.checkbox("Higiene pessoal adequada", value=False)
+    
+    if st.button("📊 Simular Impacto de Goiânia"):
+        # Cálculos baseados no acidente real
+        if tipo_exposicao == "Contato direto":
+            dose_diaria = atividade_fonte * 1000  # µSv/dia para contato próximo
+        elif tipo_exposicao == "Inalação":
+            dose_diaria = atividade_fonte * 100  # µSv/dia para inalação
+        elif tipo_exposicao == "Ingestão":
+            dose_diaria = atividade_fonte * 500  # µSv/dia para ingestão
+        else:  # Ambiental
+            dose_diaria = atividade_fonte * 10   # µSv/dia para ambiental
+            
+        dose_total = dose_diaria * tempo_exposicao
+        
+        # Reduções por proteção
+        fatores_conhecimento = {"Nenhum": 1.0, "Baixo": 0.8, "Médio": 0.5, "Alto": 0.2}
+        dose_total *= fatores_conhecimento[conhecimento]
+        
+        if lavagem:
+            dose_total *= 0.3  # Redução de 70% com higiene adequada
+        
+        st.markdown("---")
+        st.markdown("### 📊 Resultados da Simulação")
+        
+        col_res1, col_res2 = st.columns(2)
+        
+        with col_res1:
+            st.markdown(f'<div class="result-box"><h4>📈 Dose estimada: <span style="color:#d32f2f">{dose_total:,.0f} µSv</span></h4></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="info-box"><h4>📏 Equivalente: <span style="color:#1976D2">{dose_total/1000:.1f} mSv</span></h4></div>', unsafe_allow_html=True)
+        
+        with col_res2:
+            if dose_total < 100000:  # < 100 mSv
+                risco = "Baixo"
+                cor = "green"
+            elif dose_total < 1000000:  # < 1 Sv
+                risco = "Moderado"
+                cor = "orange"
+            elif dose_total < 3000000:  # < 3 Sv
+                risco = "Alto"
+                cor = "red"
+            else:
+                risco = "Severo"
+                cor = "darkred"
+            
+            st.markdown(f'<div class="warning-box"><h4>⚠️ Nível de risco: <span style="color:{cor}">{risco}</span></h4></div>', unsafe_allow_html=True)
+        
+        # Efeitos na saúde baseados no acidente real
+        st.markdown("### 👨‍⚕️ Efeitos na Saúde Observados")
+        
+        if dose_total > 3000000:  # > 3 Sv
+            st.error("🚨 **Risco severo** - Efeitos agudos graves")
+            st.markdown("- Queimaduras radiológicas severas")
+            st.markdown("- Síndrome gastrointestinal")
+            st.markdown("- Supressão medular completa")
+            st.markdown("- Alto risco de óbito")
+        elif dose_total > 1000000:  # > 1 Sv
+            st.warning("⚠️ **Risco alto** - Efeitos agudos significativos")
+            st.markdown("- Queimaduras radiológicas")
+            st.markdown("- Náusea, vômito e diarreia")
+            st.markdown("- Supressão medular")
+            st.markdown("- Necessidade de tratamento médico")
+        else:
+            st.info("ℹ️ **Risco baixo a moderado** - Efeitos principalmente tardios")
+            st.markdown("- Aumento do risco de câncer a longo prazo")
+            st.markdown("- Possíveis efeitos dermatológicos")
+            st.markdown("- Monitoramento médico recomendado")
+        
+        # Estatísticas do acidente real
+        st.markdown("### 📊 Estatísticas do Acidente Real")
+        
+        dados_reais = {
+            "Métrica": ["Pessoas contaminadas", "Pessoas hospitalizadas", 
+                       "Óbitos por radiação", "Casos de injúria cutânea",
+                       "Lugares contaminados", "Volume de rejeitos"],
+            "Valor": ["~112,000", "249", "4", "50", "85 locais", "3,500 m³"],
+            "Detalhes": ["Monitoradas", "20 em UTI", "Diretamente", "Queimaduras", 
+                        "Identificados", "Material radioativo"]
+        }
+        
+        df_reais = pd.DataFrame(dados_reais)
+        st.dataframe(df_reais, use_container_width=True)
+        
+        # Informações históricas
+        st.markdown("### 📜 Informações Históricas")
+        st.markdown("""
+        **O acidente de Goiânia (13/09/1987):**
+        - **Causa:** Abandono de equipamento radioterápico e remoção por catadores
+        - **Fonte:** Césio-137 de uma unidade de radioterapia abandonada
+        - **Material:** 93g de Cloreto de Césio (sal brilhante azul)
+        - **Dispersão:** Distribuído para familiares e amigos como "pó mágico"
+        - **Detecção:** Enfermeira identificou conexão com sintomas radiológicos
+        
+        **Consequências:**
+        - 4 mortes por síndrome aguda de radiação
+        - 49 pessoas hospitalizadas com contaminação significativa
+        - 112,000 pessoas monitoradas (¼ da população de Goiânia)
+        - Grandes operações de descontaminação
+        - Impacto psicológico significativo na população
+        """)
+        
+        # Lições aprendidas
+        st.markdown("### 💡 Lições Aprendidas com Goiânia")
+        st.markdown("""
+        1. **Gestão de fontes radioativas** - Controle rigoroso de fontes abandonadas
+        2. **Educação pública** - Conscientização sobre riscos radiológicos
+        3. **Preparação médica** - Protocolos para tratamento de contaminados
+        4. **Resposta emergencial** - Planos integrados para acidentes radiológicos
+        5. **Legislação** - Fortalecimento das leis de proteção radiológica no Brasil
+        """)
+
+def simulacao_three_mile_island():
+    st.markdown("### ☢️ Acidente de Three Mile Island (1979)")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**📊 Parâmetros do Acidente:**")
+        severidade = st.slider("Severidade do acidente", 
+                             1, 10, 5, 1,
+                             help="Nível de dano ao núcleo do reator")
+        
+        tempo_exposicao = st.slider("Tempo de exposição (horas)", 
+                                  1, 168, 48, 1)
+        
+        vento_direcao = st.selectbox("Direção do vento durante o acidente", 
+                                   ["Para áreas populadas", "Para áreas rurais", "Mista"],
+                                   index=2)
+    
+    with col2:
+        st.markdown("**📋 Características do Acidente:**")
+        st.markdown("- **Tipo de reator:** PWR (Pressurized Water Reactor)")
+        st.markdown("- **Problema principal:** Perda de refrigerante + erro humano")
+        st.markdown("- **Liberação principal:** Gases nobres (Xe-133, Kr-85)")
+        st.markdown("- **I-131 liberado:** Quantidade mínima")
+        
+        st.markdown("**🛡️ Fatores de Mitigação:**")
+        contencao = st.selectbox("Integridade da contenção", 
+                               ["Intacta", "Danificada", "Comprometida"],
+                               index=0)
+        resposta = st.selectbox("Velocidade da resposta", 
+                              ["Imediata", "Rápida", "Lenta", "Muito lenta"],
+                              index=1)
+    
+    if st.button("📊 Simular Impacto de Three Mile Island"):
+        # Cálculos baseados no acidente real (que teve baixíssima liberação)
+        dose_base = severidade * 10  # µSv/h no pico próximo à usina
+        dose_total = dose_base * tempo_exposicao
+        
+        # Ajustes baseados nos fatores
+        if contencao == "Intacta":
+            dose_total *= 0.1  # 90% de redução
+        elif contencao == "Danificada":
+            dose_total *= 0.5  # 50% de redução
+            
+        if resposta == "Imediata":
+            dose_total *= 0.3
+        elif resposta == "Rápida":
+            dose_total *= 0.7
+        elif resposta == "Lenta":
+            dose_total *= 1.2
+            
+        if vento_direcao == "Para áreas populadas":
+            dose_total *= 2.0
+        elif vento_direcao == "Para áreas rurais":
+            dose_total *= 0.5
+        
+        st.markdown("---")
+        st.markdown("### 📊 Resultados da Simulação")
+        
+        col_res1, col_res2 = st.columns(2)
+        
+        with col_res1:
+            st.markdown(f'<div class="result-box"><h4>📈 Dose máxima estimada: <span style="color:#d32f2f">{dose_total:,.0f} µSv</span></h4></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="info-box"><h4>📏 Equivalente: <span style="color:#1976D2">{dose_total/1000:.1f} mSv</span></h4></div>', unsafe_allow_html=True)
+        
+        with col_res2:
+            # No acidente real, a dose máxima foi ~1 mSv
+            if dose_total < 1000:
+                risco = "Mínimo"
+                cor = "green"
+            elif dose_total < 5000:
+                risco = "Muito baixo"
+                cor = "lightgreen"
+            elif dose_total < 10000:
+                risco = "Baixo"
+                cor = "orange"
+            else:
+                risco = "Moderado"
+                cor = "red"
+            
+            st.markdown(f'<div class="warning-box"><h4>⚠️ Nível de risco: <span style="color:{cor}">{risco}</span></h4></div>', unsafe_allow_html=True)
+        
+        # Comparação com dados reais
+        st.markdown("### 📊 Dados Reais do Acidente")
+        
+        dados_reais = {
+            "Parâmetro": ["Dose máxima à população", "Dose média na área de 16km", 
+                         "Liberação de I-131", "Liberação de gases nobres",
+                         "Trabalhadores com dose >5mSv", "Custo total"],
+            "Valor": ["~1 mSv", "0.08 mSv", "<1 Ci", "~13 milhões de Ci", 
+                     "~100", "US$ 2.4 bilhões"],
+            "Notas": ["Limite inferior de detecção", "Muito abaixo do natural", 
+                     "Mínima", "Principalmente Xe-133", 
+                     "Nenhum acima de 50mSv", "Limpeza + perdas"]
+        }
+        
+        df_reais = pd.DataFrame(dados_reais)
+        st.dataframe(df_reais, use_container_width=True)
+        
+        # Impacto na saúde
+        st.markdown("### 👨‍⚕️ Impacto na Saúde Real")
+        st.markdown("""
+        **Estudos epidemiológicos realizados:**
+        - **Estudo de Columbia University:** Nenhum aumento detectável de câncer
+        - **Estudo do Pennsylvania Department of Health:** Nenhum efeito significativo
+        - **Estudos de efeitos psicológicos:** Estresse e ansiedade significativos
+        - **Follow-up de 30 anos:** Nenhum excesso de mortalidade detectado
+        
+        **Conclusão científica consensual:**
+        > "As doses de radiação foram muito baixas para causar efeitos detectáveis na saúde"
+        """)
+        
+        # Informações históricas
+        st.markdown("### 📜 Informações Históricas")
+        st.markdown("""
+        **O acidente de Three Mile Island (28/03/1979):**
+        - **Local:** Usina nuclear perto de Harrisburg, Pensilvânia, EUA
+        - **Causa:** Combinação de falha mecânica (válvula aberta) + erros humanos
+        - **Natureza:** Fusão parcial do núcleo do reator (~50% do núcleo danificado)
+        - **Contenção:** Manteve-se intacta, limitando drasticamente as liberações
+        - **Resposta:** Evacuação voluntária de grávidas e crianças pequenas
+        
+        **Significado histórico:**
+        - Primeiro grande acidente comercial de energia nuclear nos EUA
+        - Mudou profundamente a regulamentação nuclear norte-americana
+        - Marcou o início do declínio da indústria nuclear nos EUA
+        - Demonstrou a importância dos fatores humanos na segurança nuclear
+        """)
+        
+        # Lições aprendidas
+        st.markdown("### 💡 Lições Aprendidas com Three Mile Island")
+        st.markdown("""
+        1. **Treinamento de operadores** - Melhoria significativa nos programas de treinamento
+        2. **Design de controle humano** - Interfaces homem-máquina mais intuitivas
+        3. **Cultura de segurança** - Ênfase na questionamento e comunicação aberta
+        4. **Preparação para emergências** - Planos de evacuação e resposta melhorados
+        5. **Transparência pública** - Melhor comunicação de riscos ao público
+        6. **Regulamentação** - Criação do Instituto de Operadores Nucleares (INPO)
+        """)
+
+def simulacao_testes_nucleares():
+    st.markdown("### ☢️ Testes Atmosféricos de Armas Nucleares")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**📊 Parâmetros dos Testes:**")
+        numero_testes = st.slider("Número de testes", 
+                                1, 2000, 528, 1,
+                                help="Testes atmosféricos realizados")
+        
+        potencia_total = st.slider("Potência total (Megatons)", 
+                                 1, 500, 440, 1,
+                                 help="Potência explosiva total em equivalentes de TNT")
+        
+        periodo = st.selectbox("Período dos testes", 
+                             ["1945-1963", "1963-1980", "Todo o período"],
+                             index=0)
+    
+    with col2:
+        st.markdown("**📋 Principais Isótopos Liberados:**")
+        st.markdown("- **C-14:** 5,730 anos meia-vida (global)")
+        st.markdown("- **Sr-90:** 28.8 anos meia-vida (ossos)")
+        st.markdown("- **Cs-137:** 30.17 anos meia-vida (global)")
+        st.markdown("- **I-131:** 8.02 dias meia-vida (tiroide)")
+        st.markdown("- **Pu-239:** 24,100 anos meia-vida (pulmões)")
+        
+        st.markdown("**🌍 Fatores Geográficos:**")
+        localizacao = st.selectbox("Localização predominante", 
+                                 ["Hemisfério Norte", "Hemisfério Sul", "Equatorial"],
+                                 index=0)
+        populacao = st.slider("População exposta (milhões)", 
+                            1, 5000, 2000, 100)
+    
+    if st.button("📊 Simular Impacto dos Testes Nucleares"):
+        # Cálculos baseados em estudos do UNSCEAR
+        dose_per_test = 10  # µSv por quilotons por teste
+        dose_total = numero_testes * potencia_total * 1000 * dose_per_test  # Convertendo para quilotons
+        
+        # Ajustes por período e localização
+        if periodo == "1945-1963":
+            dose_total *= 1.5  # Testes mais sujos no início
+        elif periodo == "1963-1980":
+            dose_total *= 0.7  # Testes mais limpos após PTBT
+            
+        if localizacao == "Hemisfério Norte":
+            dose_total *= 1.2  # Maior concentração no HN
+        elif localizacao == "Hemisfério Sul":
+            dose_total *= 0.8
+        
+        dose_per_capita = dose_total / populacao
+        
+        st.markdown("---")
+        st.markdown("### 📊 Resultados da Simulação")
+        
+        col_res1, col_res2, col_res3 = st.columns(3)
+        
+        with col_res1:
+            st.markdown(f'<div class="result-box"><h4>📈 Dose coletiva: <span style="color:#d32f2f">{dose_total/1e9:,.1f} 10⁹ µSv</span></h4></div>', unsafe_allow_html=True)
+        
+        with col_res2:
+            st.markdown(f'<div class="result-box"><h4>👥 Dose per capita: <span style="color:#d32f2f">{dose_per_capita:,.0f} µSv</span></h4></div>', unsafe_allow_html=True)
+        
+        with col_res3:
+            st.markdown(f'<div class="info-box"><h4>📏 Equivalente: <span style="color:#1976D2">{dose_per_capita/1000:.2f} mSv</span></h4></div>', unsafe_allow_html=True)
+        
+        # Comparação com dados reais
+        st.markdown("### 📊 Dados Reais dos Testes Atmosféricos")
+        
+        dados_reais = {
+            "Parâmetro": ["Testes atmosféricos totais", "Potência total", 
+                         "Dose coletiva global", "Dose per capita média",
+                         "Pico de C-14 atmosférico", "Redução após moratória"],
+            "Valor": ["528 testes", "440 Mt", "30 milhões homem-Sv", "~0.4 mSv/ano", 
+                     "2x o nível natural", ">90% em 2 anos"],
+            "Período": ["1945-1980", "Principalmente 1950-60", "Acumulada", "No pico (1963)", 
+                       "1963", "Para I-131"]
+        }
+        
+        df_reais = pd.DataFrame(dados_reais)
+        st.dataframe(df_reais, use_container_width=True)
+        
+        # Impacto na saúde global
+        st.markdown("### 👨‍⚕️ Impacto na Saúde Global Estimado")
+        
+        # Baseado em modelos da ONU (UNSCEAR)
+        canceres_estimados = dose_total / 1e9 * 0.05  # 5% por Sv para população
+        
+        st.markdown(f"""
+        **Estimativas baseadas em modelos da UNSCEAR:**
+        - **Dose coletiva total:** {dose_total/1e9:.1f} × 10⁹ homem-µSv
+        - **Risco de câncer:** ~5% por Sievert para população
+        - **Cânceres estimados:** ~{canceres_estimados:,.0f} casos adicionais
+        - **Distribuição:** Principalmente tireoide, leucemia e sólidos
+        
+        **Nota:** Estas são estimativas estatísticas, não casos individuais identificáveis.
+        """)
+        
+        # Evolução temporal
+        st.markdown("### 📈 Evolução Temporal das Liberações")
+        
+        anos = np.array([1945, 1950, 1955, 1960, 1965, 1970, 1975, 1980])
+        liberacoes = np.array([0.1, 5, 15, 30, 5, 2, 1, 0.5])  # Unidades relativas
+        
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.plot(anos, liberacoes, 'r-', linewidth=3, marker='o')
+        ax.axvline(x=1963, color='green', linestyle='--', 
+                  label='Tratado de Proibição Parcial (1963)')
+        ax.axvline(x=1980, color='blue', linestyle='--', 
+                  label='Fim dos testes atmosféricos')
+        
+        ax.set_xlabel("Ano")
+        ax.set_ylabel("Liberações Relativas")
+        ax.set_title("Evolução das Liberações por Testes Atmosféricos")
+        ax.legend()
+        ax.grid(True)
+        ax.set_ylim(0, 35)
+        
+        st.pyplot(fig)
+        
+        # Informações históricas
+        st.markdown("### 📜 Contexto Histórico")
+        st.markdown("""
+        **Cronologia dos testes atmosféricos:**
+        - **1945-1950:** Primeiros testes EUA e URSS (Trinity, Crossroads, Joe-1)
+        - **1950-1960:** Período de testes intensivos (Castle Bravo, Tsar Bomba)
+        - **1963:** Tratado de Proibição Parcial de Testes (PTBT)
+        - **1963-1980:** Testes limitados por França e China (não signatários)
+        - **1980:** Último teste atmosférico chinês
+        
+        **Principais locais de teste:**
+        - **EUA:** Nevada Test Site, Ilhas Marshall
+        - **URSS:** Semipalatinsk, Novaya Zemlya
+        - **UK:** Austrália, Ilhas Christmas
+        - **França:** Argélia, Polinésia Francesa
+        - **China:** Lop Nur
+        """)
+        
+        # Lições aprendidas e legado
+        st.markdown("### 💡 Legado e Lições Aprendidas")
+        st.markdown("""
+        1. **Ciência dos fallout** - Compreensão detalhada do transporte de radioisótopos
+        2. **Monitoramento global** - Desenvolvimento de redes internacionais de monitoramento
+        3. **Medicina radiológica** - Avanços no tratamento de contaminação interna
+        4. **Proteção radiológica** - Desenvolvimento de padrões de proteção internacional
+        5. **Diplomacia científica** - Cooperação internacional em monitoramento ambiental
+        6. **Tratados internacionais** - Base científica para acordos de desarmamento
+        
+        **Impacto positivo inesperado:**
+        - Datação por C-14 calibrada usando o "pico da bomba"
+        - Estudos de metabolismo humano usando radioisótopos do fallout
+        - Avanços na compreensão da circulação atmosférica global
+        """)
+
+def simulacao_kyshtym():
+    st.markdown("### ☢️ Acidente de Kyshtym (1957) - URSS")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**📊 Parâmetros do Acidente:**")
+        volume_residuos = st.slider("Volume de resíduos (milhões de litros)", 
+                                  1, 100, 80, 1,
+                                  help="Volume no tanque que explodiu")
+        
+        atividade = st.slider("Atividade total (PBq)", 
+                            1, 1000, 740, 10,
+                            help="Atividade principalmente de Sr-90 e Cs-137")
+        
+        vento_velocidade = st.slider("Velocidade do vento (km/h)", 
+                                   0, 100, 40, 5)
+    
+    with col2:
+        st.markdown("**📋 Natureza do Acidente:**")
+        st.markdown("- **Tipo:** Explosão química de tanque de resíduos")
+        st.markdown("- **Local:** Complexo Mayak, Montanhas Urais, URSS")
+        st.markdown("- **Causa:** Falha no sistema de refrigeração do tanque")
+        st.markdown("- **Principal contaminante:** Sr-90 (28.8 anos meia-vida)")
+        
+        st.markdown("**🛡️ Fatores de Resposta:**")
+        evacuacao = st.selectbox("Tempo de evacuação", 
+                               ["Imediata", "1 semana", "2 semanas", "1 mês", "Nenhuma"],
+                               index=3)
+        informacao_publica = st.selectbox("Transparência da informação", 
+                                        ["Nenhuma", "Limitada", "Parcial", "Completa"],
+                                        index=0)
+    
+    if st.button("📊 Simular Impacto de Kyshtym"):
+        # Cálculos baseados no acidente real
+        dose_base = atividade * 50  # µSv para população próxima
+        dose_total = dose_base
+        
+        # Ajustes baseados nos fatores
+        if evacuacao == "Imediata":
+            dose_total *= 0.2
+        elif evacuacao == "1 semana":
+            dose_total *= 0.5
+        elif evacuacao == "2 semanas":
+            dose_total *= 0.8
+            
+        if informacao_publica == "Completa":
+            dose_total *= 0.3
+        elif informacao_publica == "Parcial":
+            dose_total *= 0.6
+        elif informacao_publica == "Limitada":
+            dose_total *= 0.9
+        
+        st.markdown("---")
+        st.markdown("### 📊 Resultados da Simulação")
+        
+        col_res1, col_res2 = st.columns(2)
+        
+        with col_res1:
+            st.markdown(f'<div class="result-box"><h4>📈 Dose estimada: <span style="color:#d32f2f">{dose_total:,.0f} µSv</span></h4></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="info-box"><h4>📏 Equivalente: <span style="color:#1976D2">{dose_total/1000:.1f} mSv</span></h4></div>', unsafe_allow_html=True)
+        
+        with col_res2:
+            if dose_total < 50000:
+                risco = "Moderado"
+                cor = "orange"
+            elif dose_total < 200000:
+                risco = "Alto"
+                cor = "red"
+            else:
+                risco = "Severo"
+                cor = "darkred"
+            
+            st.markdown(f'<div class="warning-box"><h4>⚠️ Nível de risco: <span style="color:{cor}">{risco}</span></h4></div>', unsafe_allow_html=True)
+        
+        # Informações históricas
+        st.markdown("### 📜 Informações Históricas (Reveladas Tardiamente)")
+        st.markdown("""
+        **O acidente de Kyshtym (29/09/1957):**
+        - **Segredo de estado:** Não foi reconhecido oficialmente até 1989
+        - **Natureza:** Explosão química em tanque de resíduos de produção de plutônio
+        - **Liberação:** ~20 MCi (740 PBq) principalmente de Sr-90
+        - **Área contaminada:** ~20,000 km² (Trajeto de 300km × 50km)
+        - **População afetada:** ~270,000 pessoas na trajetória do fallout
+        
+        **Consequências:**
+        - Evacuação tardia de 10,000 pessoas (após 1-2 anos)
+        - Criação da Reserva Radiológica do Leste-Ural (área proibida)
+        - Aumento de leucemias e outros cânceres na região
+        - Contaminação duradoura do solo e água
+        """)
+        
+        # Mapa do fallout
+        st.markdown("### 🗺️ Trajetória do Fallout de Kyshtym")
+        
+        # Criar mapa simplificado da pluma de contaminação
+        x = np.linspace(0, 300, 100)
+        y = 20 * np.exp(-0.01 * x) * np.sin(0.1 * x)  # Padrão de pluma oscilante
+        
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.plot(x, y, 'r-', linewidth=3, alpha=0.7, label='Trajetória principal do fallout')
+        ax.fill_between(x, -y, y, color='red', alpha=0.2, label='Área de contaminação significativa')
+        
+        ax.axvline(x=100, color='orange', linestyle='--', label='Zona de evacuação imediata')
+        ax.axvline(x=200, color='yellow', linestyle='--', label='Zona de monitoramento intensivo')
+        
+        ax.set_xlabel("Distância da Fonte (km)")
+        ax.set_ylabel("Largura da Pluma (km)")
+        ax.set_title("Padrão de Dispersão do Fallout de Kyshtym")
+        ax.legend()
+        ax.grid(True)
+        
+        st.pyplot(fig)
+        
+        # Lições aprendidas
+        st.markdown("### 💡 Lições Aprendidas com Kyshtym")
+        st.markdown("""
+        1. **Gestão de resíduos nucleares** - Importância do tratamento e armazenamento adequado
+        2. **Monitoramento ambiental** - Necessidade de sistemas robustos de detecção
+        3. **Transparência** - Perigos do secretismo em acidentes radiológicos
+        4. **Preparação para emergências** - Planos de evacuação devem ser pré-estabelecidos
+        5. **Cooperação internacional** - Importância do compartilhamento de experiências
+        6. **Legado de contaminação** - Longo prazo dos impactos de acidentes radiológicos
+        """)
+
+def simulacao_windscale():
+    st.markdown("### 🔥 Incêndio de Windscale (1957) - Reino Unido")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**📊 Parâmetros do Acidente:**")
+        duracao_incendio = st.slider("Duração do incêndio (horas)", 
+                                   1, 100, 48, 1,
+                                   help="Tempo que o incêndio permaneceu ativo")
+        
+        iodo_liberado = st.slider("I-131 liberado (TBq)", 
+                                1, 10000, 20000, 100,
+                                help="Estimativa de Iodo-131 liberado")
+        
+        direcao_vento = st.selectbox("Direção predominante do vento", 
+                                   ["Para o mar Irlandês", "Para áreas rurais", "Para áreas urbanas"],
+                                   index=0)
+    
+    with col2:
+        st.markdown("**📋 Natureza do Acidente:**")
+        st.markdown("- **Tipo:** Incêndio em reator de produção de plutônio")
+        st.markdown("- **Local:** Windscale Works, Cumbria, Inglaterra")
+        st.markdown("- **Causa:** Liberação de energia Wigner em grafite")
+        st.markdown("- **Principal contaminante:** I-131 (8.02 dias meia-vida)")
+        
+        st.markdown("**🛡️ Medidas de Proteção:**")
+        monitoramento_leite = st.checkbox("Monitoramento de leite", value=True)
+        distribuicao_iodo = st.checkbox("Distribuição de iodeto", value=False)
+        restricoes_alimentares = st.checkbox("Restrições alimentares", value=True)
+    
+    if st.button("📊 Simular Impacto de Windscale"):
+        # Cálculos baseados no acidente real
+        dose_base = iodo_liberado * 0.05  # µSv por TBq liberado
+        dose_total = dose_base
+        
+        # Ajustes baseados nos fatores
+        if direcao_vento == "Para o mar Irlandês":
+            dose_total *= 0.3
+        elif direcao_vento == "Para áreas urbanas":
+            dose_total *= 2.0
+            
+        if monitoramento_leite:
+            dose_total *= 0.5
+        if distribuicao_iodo:
+            dose_total *= 0.3
+        if restricoes_alimentares:
+            dose_total *= 0.4
+        
+        st.markdown("---")
+        st.markdown("### 📊 Resultados da Simulação")
+        
+        col_res1, col_res2 = st.columns(2)
+        
+        with col_res1:
+            st.markdown(f'<div class="result-box"><h4>📈 Dose de tireoide: <span style="color:#d32f2f">{dose_total:,.0f} µSv</span></h4></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="info-box"><h4>📏 Equivalente: <span style="color:#1976D2">{dose_total/1000:.1f} mSv</span></h4></div>', unsafe_allow_html=True)
+        
+        with col_res2:
+            if dose_total < 10000:
+                risco = "Baixo"
+                cor = "green"
+            elif dose_total < 50000:
+                risco = "Moderado"
+                cor = "orange"
+            else:
+                risco = "Alto"
+                cor = "red"
+            
+            st.markdown(f'<div class="warning-box"><h4>⚠️ Risco de câncer de tireoide: <span style="color:{cor}">{risco}</span></h4></div>', unsafe_allow_html=True)
+        
+        # Informações históricas
+        st.markdown("### 📜 Informações Históricas")
+        st.markdown("""
+        **O incêndio de Windscale (10/10/1957):**
+        - **Primeiro grande acidente nuclear:** do mundo ocidental
+        - **Contexto:** Corrida armamentista durante a Guerra Fria
+        - **Resposta:** Corajosa decisão de usar água para apagar o incêndio
+        - **Liberação principal:** ~20,000 TBq de I-131 (estimativas variam)
+        - **Monitoramento:** Primeiro uso em larga escala de monitoramento de leite
+        
+        **Consequências:**
+        - Restrições ao consumo de leite em área de 500 km²
+        - Nenhuma morte direta atribuída ao acidente
+        - Estima-se ~240 casos adicionais de câncer de tireoide
+        - Levou a melhorias significativas na segurança de reatores
+        """)
+        
+        # Medidas de proteção implementadas
+        st.markdown("### 🛡️ Medidas de Proteção Implementadas")
+        
+        medidas = {
+            "Medida": ["Monitoramento de leite", "Destruição de leite contaminado", 
+                      "Restrições à pesca", "Monitoramento de pastagens",
+                      "Estudos epidemiológicos", "Melhorias no reator"],
+            "Escala": ["200 fazendas", "2 milhões de litros", 
+                      "Área costeira", "500 km²", 
+                      "Longo prazo", "Imediatas"],
+            "Efetividade": ["Alta", "Alta", "Moderada", "Alta", 
+                           "Para aprendizado", "Muito alta"]
+        }
+        
+        df_medidas = pd.DataFrame(medidas)
+        st.dataframe(df_medidas, use_container_width=True)
+        
+        # Lições aprendidas
+        st.markdown("### 💡 Lições Aprendidas com Windscale")
+        st.markdown("""
+        1. **Importância do monitoramento ambiental** - Especialmente da cadeia alimentar
+        2. **Gerenciamento de crise** - Valor da tomada de decisão rápida e corajosa
+        3. **Comunicação de risco** - Necessidade de informar o público adequadamente
+        4. **Pesquisa epidemiológica** - Importância do acompanhamento de longo prazo
+        5. **Melhorias de design** - Revisão completa dos sistemas de segurança
+        6. **Preparação para emergências** - Desenvolvimento de protocolos de resposta
+        """)
+
+def simulacao_tokaimura():
+    st.markdown("### ⚡ Acidente de Criticidade de Tokaimura (1999) - Japão")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**📊 Parâmetros do Acidente:**")
+        quantidade_uranio = st.slider("Quantidade de urânio (kg)", 
+                                    1, 50, 16, 1,
+                                    help="Massa de urânio enriquecido envolvida")
+        
+        enriquecimento = st.slider("Enriquecimento (%)", 
+                                 1, 100, 18.8, 0.1,
+                                 help="Teor de U-235 no urânio")
+        
+        duracao_criticidade = st.slider("Duração da criticidade (horas)", 
+                                      1, 24, 20, 1)
+    
+    with col2:
+        st.markdown("**📋 Natureza do Acidente:**")
+        st.markdown("- **Tipo:** Acidente de criticidade (reação nuclear descontrolada)")
+        st.markdown("- **Local:** Instalação de preparação de combustível, Tokai, Japão")
+        st.markdown("- **Causa:** Procedimentos inadequados com urânio altamente enriquecido")
+        st.markdown("- **Exposição:** Neutrons e raios gama intensos")
+        
+        st.markdown("**🛡️ Fatores de Resposta:**")
+        distancia_operadores = st.slider("Distância dos operadores (metros)", 
+                                       1, 10, 1, 1)
+        tempo_resposta = st.selectbox("Tempo de resposta emergencial", 
+                                    ["Imediato", "Rápido", "Lento", "Muito lento"],
+                                    index=1)
+    
+    if st.button("📊 Simular Impacto de Tokaimura"):
+        # Cálculos baseados no acidente real
+        # Acidente de criticidade produz doses extremamente altas em curta distância
+        dose_instantanea = 10000000  # µSv/s a 1m para reação crítica
+        dose_total = dose_instantanea * duracao_criticidade * 3600 / (distancia_operadores ** 2)
+        
+        # Ajustes baseados no tempo de resposta
+        if tempo_resposta == "Imediato":
+            dose_total *= 0.1
+        elif tempo_resposta == "Rápido":
+            dose_total *= 0.3
+        elif tempo_resposta == "Lento":
+            dose_total *= 2.0
+        
+        st.markdown("---")
+        st.markdown("### 📊 Resultados da Simulação")
+        
+        col_res1, col_res2 = st.columns(2)
+        
+        with col_res1:
+            st.markdown(f'<div class="result-box"><h4>📈 Dose estimada: <span style="color:#d32f2f">{dose_total:,.0f} µSv</span></h4></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="info-box"><h4>📏 Equivalente: <span style="color:#1976D2">{dose_total/1000000:.1f} Sv</span></h4></div>', unsafe_allow_html=True)
+        
+        with col_res2:
+            if dose_total < 1000000:  # < 1 Sv
+                risco = "Moderado"
+                cor = "orange"
+            elif dose_total < 3000000:  # < 3 Sv
+                risco = "Alto"
+                cor = "red"
+            elif dose_total < 6000000:  # < 6 Sv
+                risco = "Muito alto"
+                cor = "darkred"
+            else:
+                risco = "Fatal"
+                cor = "black"
+            
+            st.markdown(f'<div class="warning-box"><h4>⚠️ Nível de risco: <span style="color:{cor}">{risco}</span></h4></div>', unsafe_allow_html=True)
+        
+        # Efeitos na saúde baseados na dose
+        st.markdown("### 👨‍⚕️ Efeitos na Saúde Esperados")
+        
+        if dose_total > 6000000:  # > 6 Sv
+            st.error("🚨 **Dose fatal** - Síndrome cardiovascular/neurológica")
+            st.markdown("- Morte em 24-48 horas")
+            st.markdown("- Colapso cardiovascular")
+            st.markdown("- Edema cerebral")
+        elif dose_total > 3000000:  # > 3 Sv
+            st.error("🚨 **Síndrome gastrointestinal severa**")
+            st.markdown("- Morte em 2-3 semanas")
+            st.markdown("- Destruição do epitélio intestinal")
+            st.markdown("- Infecções severas e desidratação")
+        elif dose_total > 1000000:  # > 1 Sv
+            st.warning("⚠️ **Síndrome hematopoiética**")
+            st.markdown("- Supressão medular severa")
+            st.markdown("- Alto risco de infecções e hemorragias")
+            st.markdown("- Tratamento intensivo necessário")
+        else:
+            st.info("ℹ️ **Efeitos moderados** - Recuperação provável")
+            st.markdown("- Náusea, vômito e fadiga")
+            st.markdown("- Redução temporária de células sanguíneas")
+            st.markdown("- Recuperação em semanas a meses")
+        
+        # Dados reais do acidente
+        st.markdown("### 📊 Dados Reais do Acidente de Tokaimura")
+        
+        dados_reais = {
+            "Vítima": ["Operador A", "Operador B", "Supervisor", "Trabalhadores próximos"],
+            "Distância": ["0.5-1 m", "1-2 m", "2-3 m", "20-50 m"],
+            "Dose estimada": ["16-20 Sv", "6-10 Sv", "3-5 Sv", "0.01-0.1 Sv"],
+            "Resultado": ["Óbito em 12 semanas", "Óbito em 7 meses", "Sobreviveu", "Sem efeitos agudos"],
+            "Tratamento": ["Transplante de células-tronco", "Transplante de pele", "Hospitalização", "Monitoramento"]
+        }
+        
+        df_reais = pd.DataFrame(dados_reais)
+        st.dataframe(df_reais, use_container_width=True)
+        
+        # Informações históricas
+        st.markdown("### 📜 Informações Históricas")
+        st.markdown("""
+        **O acidente de Tokaimura (30/09/1999):**
+        - **Primeiro acidente de criticidade:** no ciclo de combustível civil
+        - **Causa raiz:** Procedimentos inadequados com urânio altamente enriquecido
+        - **Erro humano:** Operadores usando baldes em vez de sistemas apropriados
+        - **Reação crítica:** Sustentada por ~20 horas
+        - **Exposição:** Intensa radiação de nêutrons e raios gama
+        
+        **Resposta e consequências:**
+        - Evacuação de 310.000 pessoas dentro de 10km
+        - Tratamento médico avançado para os trabalhadores expostos
+        - Multa de ¥1 milhão para a empresa JCO
+        - Revisão completa das regulamentações nucleares japonesas
+        - Impacto significativo na confiança pública na energia nuclear
+        """)
+        
+        # Lições aprendidas
+        st.markdown("### 💡 Lições Aprendidas com Tokaimura")
+        st.markdown("""
+        1. **Importância dos procedimentos** - Seguir rigorosamente os protocolos estabelecidos
+        2. **Treinamento adequado** - Compreensão dos riscos de criticidade
+        3. **Design de facilities** - Prevenção de configurações críticas por design
+        4. **Preparação para emergências** - Planos específicos para acidentes de criticidade
+        5. **Cultura de segurança** - Encorajamento para questionar práticas inseguras
+        6. **Supervisão regulatória** - Fiscalização rigorosa das operações
+        7. **Comunicação de emergência** - Protocolos claros para proteger o público
+        8. **Pesquisa médica** - Avanços no tratamento de vítimas de altas doses
+        """)
+
 
 # =============================================================================
 # MÓDULO 11: DECAIMENTO RADIOATIVO
