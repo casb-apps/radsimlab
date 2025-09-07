@@ -107,10 +107,10 @@ with st.sidebar:
     profissionais da área.
     """)
 
-# =============================================================================
-# MÓDULO 1: DATAÇÃO RADIOMÉTRICA
-# =============================================================================
 
+# =============================================================================
+# MÓDULO 1: DATAÇÃO RADIOMÉTRICA (ATUALIZADO)
+# =============================================================================
 
 def modulo_datacao_radiometrica():
     st.header("⏳ Datação Radiométrica")
@@ -133,215 +133,6 @@ def modulo_datacao_radiometrica():
         modulo_uranio_chumbo()  # Agora implementado
     elif metodo == "Rubídio-Estrôncio":
         modulo_rubidio_estroncio()  # Agora implementado
-
-def modulo_carbono14():
-    st.markdown("### 🧪 Datação por Carbono-14")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("**Parâmetros de Entrada:**")
-        frac_remanescente = st.slider("Fração remanescente de C-14 (N/N₀)", 
-                                     min_value=0.001, max_value=0.999, 
-                                     value=0.5, step=0.001,
-                                     help="Razão entre C-14 atual e C-14 inicial")
-        
-        meia_vida = st.number_input("Meia-vida do C-14 (anos)", 
-                                   min_value=100.0, value=5730.0, step=10.0,
-                                   help="Meia-vida padrão: 5730 anos")
-    
-    with col2:
-        st.markdown("**Informações Técnicas:**")
-        st.markdown("""
-        <table class="parameter-table">
-            <tr><th>Parâmetro</th><th>Valor</th></tr>
-            <tr><td>Meia-vida do C-14</td><td>5730 anos</td></tr>
-            <tr><td>Constante de decaimento (λ)</td><td>1.21 × 10⁻⁴ ano⁻¹</td></tr>
-            <tr><td>Faixa de datação</td><td>até 50,000 anos</td></tr>
-        </table>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("**📐 Fórmula:**")
-        st.markdown('<div class="formula-box">t = (T½/ln(2)) × ln(1/(N/N₀))</div>', unsafe_allow_html=True)
-    
-    if st.button("🔄 Calcular Datação por C-14", use_container_width=True):
-        if frac_remanescente <= 0 or meia_vida <= 0:
-            st.error("Os valores devem ser positivos!")
-            return
-            
-        with st.spinner("Calculando..."):
-            time.sleep(0.5)
-            
-            # Cálculo CORRETO da idade usando a lei do decaimento radioativo
-            lambda_val = math.log(2) / meia_vida
-            idade = (1 / lambda_val) * math.log(1 / frac_remanescente)
-            
-            st.markdown("---")
-            st.markdown("### 📊 Resultados")
-            
-            st.markdown(f'<div class="result-box"><h4>🧪 Idade estimada: <span style="color:#d32f2f">{idade:,.2f} anos</span></h4></div>', unsafe_allow_html=True)
-            
-            # Detalhes do cálculo
-            st.markdown("**🔍 Detalhes do Cálculo:**")
-            col_calc1, col_calc2 = st.columns(2)
-            
-            with col_calc1:
-                st.markdown(f"- **Fração remanescente:** {frac_remanescente:.4f}")
-                st.markdown(f"- **Meia-vida do C-14:** {meia_vida:,.0f} anos")
-                st.markdown(f"- **Constante λ:** {lambda_val:.6f} ano⁻¹")
-            
-            with col_calc2:
-                st.markdown(f"- **ln(1/(N/N₀)):** {math.log(1/frac_remanescente):.4f}")
-                st.markdown(f"- **1/λ:** {1/lambda_val:,.0f} anos")
-                st.markdown(f"- **Idade calculada:** {idade:,.0f} anos")
-            
-            # Verificação com exemplo conhecido
-            if abs(frac_remanescente - 0.5) < 0.01 and abs(meia_vida - 5730) < 1:
-                st.success("✅ Verificação: Para 50% de C-14 remanescente, a idade deve ser igual à meia-vida (5730 anos)")
-            
-            # Gráfico do decaimento
-            tempos = np.linspace(0, min(idade * 1.5, 50000), 100)
-            fracoes = np.exp(-lambda_val * tempos)
-            
-            fig, ax = plt.subplots(figsize=(10, 6))
-            ax.plot(tempos, fracoes, 'b-', linewidth=3, label='N(t)/N₀ = e^(–λt)')
-            ax.plot(idade, frac_remanescente, 'ro', markersize=10, 
-                   label=f'Idade estimada: {idade:.0f} anos')
-            
-            # Linhas de meia-vida
-            for i in range(1, 6):
-                t_meia = meia_vida * i
-                frac_meia = 0.5 ** i
-                ax.axvline(x=t_meia, color='gray', linestyle='--', alpha=0.5)
-                ax.axhline(y=frac_meia, color='gray', linestyle='--', alpha=0.5)
-                ax.text(t_meia, 1.02, f'{i}T½', ha='center', va='bottom', color='gray')
-            
-            ax.set_xlabel("Tempo (anos)")
-            ax.set_ylabel("Fração de C-14 remanescente (N/N₀)")
-            ax.set_title("Decaimento do Carbono-14")
-            ax.legend()
-            ax.grid(True)
-            ax.set_ylim(0, 1.1)
-            
-            st.pyplot(fig)
-            
-            # Tabela de dados para exportação
-            df = pd.DataFrame({
-                "Tempo (anos)": tempos, 
-                "Fração_C14": fracoes,
-                "Atividade_Relativa": fracoes  # Para C-14, fração = atividade relativa
-            })
-            
-            # Opções de download
-            col_dl1, col_dl2 = st.columns(2)
-            with col_dl1:
-                st.download_button("📥 Baixar CSV", data=df.to_csv(index=False), 
-                                  file_name="carbono14_simulation.csv", mime="text/csv",
-                                  use_container_width=True)
-            with col_dl2:
-                st.download_button("📥 Baixar TXT", data=df.to_string(index=False), 
-                                  file_name="carbono14_results.txt", mime="text/plain",
-                                  use_container_width=True)
-
-def modulo_potassio_argonio():
-    st.markdown("### 🔋 Datação por Potássio-Argônio")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("**Parâmetros de Entrada:**")
-        razao_ar_k = st.number_input("Razão ⁴⁰Ar/⁴⁰K", 
-                                   min_value=0.001, value=0.5, step=0.001,
-                                   format="%.3f",
-                                   help="Razão entre Argônio-40 e Potássio-40")
-        
-        meia_vida = st.number_input("Meia-vida do ⁴⁰K (anos)", 
-                                   min_value=1.0e8, value=1.25e9, 
-                                   format="%.2e",
-                                   help="Meia-vida padrão: 1.25 × 10⁹ anos")
-        
-        fracao_decaimento = st.number_input("Fração que decai para ⁴⁰Ar", 
-                                          min_value=0.01, max_value=1.0, 
-                                          value=0.1072, step=0.0001,
-                                          help="Padrão: 0.1072 (10.72%)")
-    
-    with col2:
-        st.markdown("**Informações Técnicas:**")
-        st.markdown("""
-        <table class="parameter-table">
-            <tr><th>Parâmetro</th><th>Valor</th></tr>
-            <tr><td>Meia-vida do ⁴⁰K</td><td>1.25 × 10⁹ anos</td></tr>
-            <tr><td>Fração para ⁴⁰Ar</td><td>10.72%</td></tr>
-            <tr><td>Faixa de datação</td><td>10⁴ - 10⁹ anos</td></tr>
-        </table>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("**📐 Fórmula:**")
-        st.markdown('<div class="formula-box">t = (1/λ) × ln(1 + (⁴⁰Ar/⁴⁰K) × (λ/λ_Ar))</div>', unsafe_allow_html=True)
-        st.markdown('*Simplificado para: t = (1/λ) × ln(1 + R × (1/f))*', unsafe_allow_html=True)
-    
-    if st.button("🔄 Calcular Datação por K-Ar", use_container_width=True):
-        if razao_ar_k <= 0 or meia_vida <= 0 or fracao_decaimento <= 0:
-            st.error("Todos os valores devem ser positivos!")
-            return
-            
-        # Cálculo CORRETO considerando a fração de decaimento
-        lambda_val = math.log(2) / meia_vida
-        idade = (1 / lambda_val) * math.log(1 + (razao_ar_k / fracao_decaimento))
-        
-        st.markdown("---")
-        st.markdown("### 📊 Resultados")
-        
-        idade_millions = idade / 1e6
-        
-        if idade_millions < 1:
-            st.markdown(f'<div class="result-box"><h4>🔋 Idade estimada: <span style="color:#d32f2f">{idade:,.2f} anos</span></h4></div>', unsafe_allow_html=True)
-        else:
-            st.markdown(f'<div class="result-box"><h4>🔋 Idade estimada: <span style="color:#d32f2f">{idade_millions:,.2f} milhões de anos</span></h4></div>', unsafe_allow_html=True)
-        
-        # Detalhes do cálculo
-        st.markdown("**🔍 Detalhes do Cálculo:**")
-        
-        col_calc1, col_calc2 = st.columns(2)
-        
-        with col_calc1:
-            st.markdown(f"- **Razão ⁴⁰Ar/⁴⁰K:** {razao_ar_k:.4f}")
-            st.markdown(f"- **Meia-vida do ⁴⁰K:** {meia_vida:.2e} anos")
-            st.markdown(f"- **Fração para ⁴⁰Ar:** {fracao_decaimento:.4f}")
-        
-        with col_calc2:
-            st.markdown(f"- **Constante λ:** {lambda_val:.3e} ano⁻¹")
-            st.markdown(f"- **Razão ajustada:** {razao_ar_k/fracao_decaimento:.4f}")
-            st.markdown(f"- **ln(1 + R/f):** {math.log(1 + razao_ar_k/fracao_decaimento):.4f}")
-        
-        # Gráfico
-        tempos = np.linspace(0, min(idade * 1.5, 5e9), 100)
-        razoes = fracao_decaimento * (np.exp(lambda_val * tempos) - 1)
-        
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.plot(tempos/1e6, razoes, 'g-', linewidth=3, label='R(t) = f × (e^(λt) - 1)')
-        ax.plot(idade/1e6, razao_ar_k, 'ro', markersize=10, 
-               label=f'Idade estimada: {idade/1e6:.2f} milhões de anos')
-        
-        ax.set_xlabel("Tempo (milhões de anos)")
-        ax.set_ylabel("Razão ⁴⁰Ar/⁴⁰K")
-        ax.set_title("Acúmulo de Argônio-40 no Método K-Ar")
-        ax.legend()
-        ax.grid(True)
-        
-        st.pyplot(fig)
-        
-        # Tabela de dados
-        df = pd.DataFrame({
-            "Tempo (milhões de anos)": tempos/1e6,
-            "Razao_Ar_K": razoes
-        })
-        
-        st.download_button("📥 Baixar CSV", data=df.to_csv(index=False), 
-                          file_name="potassio_argonio_simulation.csv", mime="text/csv",
-                          use_container_width=True)
-
-
 
 def modulo_uranio_chumbo():
     st.markdown("### ⚛️ Datação por Urânio-Chumbo")
@@ -490,7 +281,6 @@ INTERPRETAÇÃO:
         st.download_button("📥 Baixar Relatório U-Pb", data=resultado,
                           file_name="datacao_uranio_chumbo.txt",
                           mime="text/plain", use_container_width=True)
-
 
 def modulo_rubidio_estroncio():
     st.markdown("### 🔬 Datação por Rubídio-Estrôncio")
