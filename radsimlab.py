@@ -58,7 +58,6 @@ def modulo_carbono14():
         st.success(f"🧪 Idade estimada: {idade:.2f} anos")
         st.markdown("📐 Equação: `t = -ln(f) / λ`")
 
-        # Gráfico de decaimento
         tempos = np.linspace(0, idade * 1.2, 100)
         fracoes = np.exp(-l * tempos)
         fig, ax = plt.subplots()
@@ -70,12 +69,9 @@ def modulo_carbono14():
         ax.legend()
         st.pyplot(fig)
 
-        # Exportação dos dados
         df = pd.DataFrame({"Tempo (anos)": tempos, "Fração de C-14": fracoes})
-        csv = df.to_csv(index=False)
-        txt = df.to_string(index=False)
-        st.download_button("📥 Baixar CSV", data=csv, file_name="carbono14.csv", mime="text/csv")
-        st.download_button("📥 Baixar TXT", data=txt, file_name="carbono14.txt", mime="text/plain")
+        st.download_button("📥 Baixar CSV", data=df.to_csv(index=False), file_name="carbono14.csv", mime="text/csv")
+        st.download_button("📥 Baixar TXT", data=df.to_string(index=False), file_name="carbono14.txt", mime="text/plain")
 
 def modulo_potassio_argonio():
     st.markdown("### ⛏️ Potássio-Argônio")
@@ -86,7 +82,6 @@ def modulo_potassio_argonio():
         st.success(f"⛏️ Idade estimada: {idade:.2f} anos")
         st.markdown("📐 Equação: `t = (1 / λ) · ln(1 + R)`")
 
-        # Gráfico de crescimento de Ar
         tempos = np.linspace(0, idade * 1.2, 100)
         razoes = np.exp(l * tempos) - 1
         fig, ax = plt.subplots()
@@ -98,7 +93,6 @@ def modulo_potassio_argonio():
         ax.legend()
         st.pyplot(fig)
 
-        # Exportação dos dados
         df = pd.DataFrame({"Tempo (anos)": tempos, "Razão Ar/K": razoes})
         st.download_button("📥 Baixar CSV", data=df.to_csv(index=False), file_name="potassio_argonio.csv", mime="text/csv")
 
@@ -111,7 +105,6 @@ def modulo_uranio_chumbo():
         st.success(f"⛏️ Idade estimada: {idade:.2f} anos")
         st.markdown("📐 Equação: `t = (1 / λ) · ln(R + 1)`")
 
-        # Gráfico de crescimento de Pb
         tempos = np.linspace(0, idade * 1.2, 100)
         razoes = np.exp(l * tempos) - 1
         fig, ax = plt.subplots()
@@ -123,7 +116,6 @@ def modulo_uranio_chumbo():
         ax.legend()
         st.pyplot(fig)
 
-        # Exportação dos dados
         df = pd.DataFrame({"Tempo (anos)": tempos, "Razão Pb/U": razoes})
         st.download_button("📥 Baixar CSV", data=df.to_csv(index=False), file_name="uranio_chumbo.csv", mime="text/csv")
 def modulo_blindagem():
@@ -136,7 +128,6 @@ def modulo_blindagem():
         st.success(f"🧱 Espessura mínima: {x:.2f} cm")
         st.markdown("📐 Equação: `x = (1 / μ) · ln(I₀ / I)`")
 
-        # Exportação simples
         resultado = f"Dose inicial: {I0} µSv/h\nDose desejada: {I} µSv/h\nμ: {mu} cm⁻¹\nEspessura mínima: {x:.2f} cm"
         st.download_button("📥 Baixar resultado (.txt)", data=resultado, file_name="blindagem.txt", mime="text/plain")
 
@@ -151,7 +142,6 @@ def modulo_radioterapia():
         st.success(f"💉 Dose por sessão: {dps:.2f} Gy")
         st.info(f"⏱️ Tempo por sessão: {tps:.2f} min")
 
-        # Exportação simples
         resultado = f"Dose total: {D} Gy\nTaxa de dose: {R} Gy/min\nSessões: {N}\nDose por sessão: {dps:.2f} Gy\nTempo por sessão: {tps:.2f} min"
         st.download_button("📥 Baixar plano (.txt)", data=resultado, file_name="radioterapia.txt", mime="text/plain")
 
@@ -167,7 +157,6 @@ def modulo_dose():
             st.write(f"x = {x} cm → Dose = {d:.2f} Gy")
         st.markdown("📐 Equação: `D(x) = D₀ · e^(–μx)`")
 
-        # Gráfico
         fig, ax = plt.subplots()
         ax.plot(profundidades, doses, marker='o', color='purple')
         ax.set_title("Distribuição de Dose em Tecido")
@@ -175,7 +164,6 @@ def modulo_dose():
         ax.set_ylabel("Dose (Gy)")
         st.pyplot(fig)
 
-        # Exportação dos dados
         df = pd.DataFrame({"Profundidade (cm)": profundidades, "Dose (Gy)": doses})
         st.download_button("📥 Baixar CSV", data=df.to_csv(index=False), file_name="distribuicao_dose.csv", mime="text/csv")
 
@@ -191,7 +179,6 @@ def modulo_clinico():
         st.success(f"🧬 Atividade no órgão: {A:.2f} MBq")
         st.markdown("📐 Equação: `A = D · F · e^(–λt)`")
 
-        # Gráfico
         tempos = np.linspace(0, H * 2, 100)
         atividades = D * (F / 100) * np.exp(-lambda_ * tempos)
         fig, ax = plt.subplots()
@@ -203,7 +190,6 @@ def modulo_clinico():
         ax.legend()
         st.pyplot(fig)
 
-        # Exportação dos dados
         df = pd.DataFrame({"Tempo (h)": tempos, "Atividade (MBq)": atividades})
         st.download_button("📥 Baixar CSV", data=df.to_csv(index=False), file_name="tc99m.csv", mime="text/csv")
 def modulo_ambiental():
@@ -220,7 +206,6 @@ def modulo_ambiental():
         st.info(f"🌬️ Dose no ar: {dose_ar:.2f} µSv")
         st.write(f"📊 Dose total: {total:.2f} µSv")
 
-        # Exportação
         resultado = f"Dose solo: {dose_solo:.2f} µSv\nDose ar: {dose_ar:.2f} µSv\nTotal: {total:.2f} µSv"
         st.download_button("📥 Baixar resultado (.txt)", data=resultado, file_name="ambiental.txt", mime="text/plain")
 
@@ -237,7 +222,6 @@ def modulo_compton():
         st.info(f"⚡ Energia transferida: {transferida:.3f} MeV")
         st.markdown("📐 Equação: `E' = E / [1 + (E / 0.511)(1 – cosθ)]`")
 
-        # Exportação
         resultado = f"Energia inicial: {E} MeV\nÂngulo: {angulo}°\nEnergia espalhada: {Efinal:.3f} MeV\nTransferida: {transferida:.3f} MeV"
         st.download_button("📥 Baixar resultado (.txt)", data=resultado, file_name="compton.txt", mime="text/plain")
 
@@ -252,7 +236,6 @@ def modulo_pares():
             st.success(f"⚡ Energia cinética total: {Ecin:.3f} MeV")
             st.markdown("📐 Equação: `Eₖ = E – 1.022`")
 
-            # Exportação
             resultado = f"Energia do fóton: {E} MeV\nEnergia cinética total: {Ecin:.3f} MeV"
             st.download_button("📥 Baixar resultado (.txt)", data=resultado, file_name="pares.txt", mime="text/plain")
 
@@ -265,7 +248,6 @@ def modulo_ocupacional():
         dose = taxa * dias * (1 - fator)
         st.success(f"🧑‍⚕️ Dose anual estimada: {dose:.2f} µSv")
 
-        # Exportação
         resultado = f"Taxa diária: {taxa} µSv\nDias/ano: {dias}\nFator proteção: {fator}\nDose anual: {dose:.2f} µSv"
         st.download_button("📥 Baixar resultado (.txt)", data=resultado, file_name="ocupacional.txt", mime="text/plain")
 
@@ -288,7 +270,6 @@ def modulo_explicativo():
         "Compton": "Espalhamento de fótons por elétrons com perda de energia."
     }
     st.markdown(f"📚 {tema}: {explicacoes[tema]}")
-
 def modulo_quiz():
     st.subheader("❓ Quiz Interativo")
     r1 = st.text_input("Carbono-14: Qual é a meia-vida?")
@@ -326,13 +307,16 @@ def modulo_comparar():
             st.info(f"📉 Média B: {mB:.2f}")
             st.write(f"🔍 Diferença: {(mA - mB):.2f}")
 
-            # Gráfico
             fig, ax = plt.subplots()
             ax.bar(["Simulação A", "Simulação B"], [mA, mB], color=["blue", "green"])
             ax.set_ylabel("Média dos valores")
             ax.set_title("Comparação entre Simulações")
             st.pyplot(fig)
 
-            # Exportação
             df = pd.DataFrame({"Simulação A": listaA, "Simulação B": listaB})
-            st.download_button("📥 Baixar CSV", data=df.to_csv(index=False), file_name="comparacao.csv", mime="text/csv
+            st.download_button("📥 Baixar CSV", data=df.to_csv(index=False), file_name="comparacao.csv", mime="text/csv")
+        except:
+            st.error("❌ Dados inválidos. Use números separados por vírgula.")
+
+# 🚀 Executa o módulo selecionado
+carregar_modulo(modulos[modulo])
