@@ -1259,7 +1259,7 @@ def modulo_ocupacional():
         col_res1, col_res2 = st.columns(2)
         
         with col_res1:
-            st.markdown(f'<div class="result-box"><h4>📅 Dose anual: <span style="color:#d32f2f">{dose_anual_mSv:.2f} mSv</span></h4></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="result-box"><h4>📅 Dose diária: <span style="color:#d32f2f">{dose_diaria:.2f} µSv</span></h4></div>', unsafe_allow_html=True)
             st.markdown(f'<div class="info-box"><h4>📈 Dose acumulada: <span style="color:#1976D2">{dose_total_acumulada:.1f} mSv</span></h4></div>', unsafe_allow_html=True)
         
         with col_res2:
@@ -1355,7 +1355,6 @@ RECOMENDAÇÕES:
         st.download_button("📥 Baixar Relatório Completo", data=relatorio, 
                           file_name="exposicao_ocupacional.txt", mime="text/plain",
                           use_container_width=True)
-
 # =============================================================================
 # MÓDULO 10: CENÁRIOS HISTÓRICOS
 # =============================================================================
