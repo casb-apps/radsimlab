@@ -938,7 +938,7 @@ def modulo_ambiental():
         col_res1, col_res2, col_res3 = st.columns(3)
         
         with col_res1:
-            st.markdown(f'<div class="result-box"><h4>📅 Dose diária: <span style="color:#d32f2f">{dose_diaria:.2f} µSv</span></h4></div>', unsafe_allow_html=True))
+            st.markdown(f'<div class="result-box"><h4>📅 Dose diária: <span style="color:#d32f2f">{dose_diaria:.2f} µSv</span></h4></div>', unsafe_allow_html=True) unsafe_allow_html=True))
         
         with col_res2:
             st.markdown(f'<div class="result-box"><h4>📊 Dose anual: <span style="color:#d32f2f">{dose_anual:,.0f} µSv</span></h4></div>', unsafe_allow_html=True))
