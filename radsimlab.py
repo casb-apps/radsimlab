@@ -1117,13 +1117,13 @@ def modulo_efeito_compton():
         col_res1, col_res2, col_res3 = st.columns(3)
         
         with col_res1:
-            st.markdown(f'<div class="result-box"><h4>📉 Energia espalhada: <span style="color:#d32f2f">{energia_espalhada:.4f} MeV</span></h4></div>', unsafe_allow_html=True))
+            st.markdown(f'<div class="result-box"><h4>📉 Energia espalhada: <span style="color:#d32f2f">{energia_espalhada:.4f} MeV</span></h4></div>', unsafe_allow_html=True)
         
         with col_res2:
-            st.markdown(f'<div class="result-box"><h4>⚡ Energia elétron: <span style="color:#d32f2f">{energia_eletron:.4f} MeV</span></h4></div>', unsafe_allow_html=True))
+            st.markdown(f'<div class="result-box"><h4>⚡ Energia elétron: <span style="color:#d32f2f">{energia_eletron:.4f} MeV</span></h4></div>', unsafe_allow_html=True)
         
         with col_res3:
-            st.markdown(f'<div class="info-box"><h4>📏 Δλ: <span style="color:#1976D2">{delta_lambda:.3e} m</span></h4></div>', unsafe_allow_html=True))
+            st.markdown(f'<div class="info-box"><h4>📏 Δλ: <span style="color:#1976D2">{delta_lambda:.3e} m</span></h4></div>', unsafe_allow_html=True)
         
         # Detalhes do cálculo
         st.markdown("**🔍 Detalhes do Cálculo:**")
